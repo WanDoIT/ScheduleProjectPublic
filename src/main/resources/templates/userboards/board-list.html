@@ -1,0 +1,246 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+
+    <div class="wrap">
+        <main id="main" class="main">
+
+            <div class="pagetitle">
+                <h1 class="card-title">[[${pjVO.pjName}]] </h1>
+                <h6 style="padding-bottom: 20px">[[${pjVO.pjDescription}]] </h6>
+
+                <!-- 프로젝트 이름과 상세 내용 아래 메뉴 -->
+                <nav>
+                    <ul class="nav nav-tabs nav-tabs-bordered d-flex" id="borderedTabJustified" role="tablist">
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="home-tab" data-bs-toggle="tab"
+                                data-bs-target="#bordered-justified-home" type="button" role="tab" aria-controls="home"
+                                aria-selected="true"
+                                th:onclick="|location.href='@{/project/project-started(pj_num=${param.pj_num})}'|">홈</button>
+                            <!-- 받아온 get값 다른 페이지로 넘기기 -->
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100 active" id="profile-tab" data-bs-toggle="tab"
+                                data-bs-target="#bordered-justified-profile" type="button" role="tab"
+                                aria-controls="profile" aria-selected="false"
+                                th:onclick="|location.href='@{/userboards/board-list(pj_num=${param.pj_num})}'|">게시판</button>
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="contact-tab" data-bs-toggle="tab"
+                                data-bs-target="#bordered-justified-contact" type="button" role="tab"
+                                aria-controls="contact" aria-selected="false"
+                                th:onclick="|location.href='@{/project/project-calendar(pj_num=${param.pj_num})}'|">캘린더</button>
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="contact-tab" data-bs-toggle="tab"
+                                data-bs-target="#bordered-justified-contact" type="button" role="tab"
+                                aria-controls="contact" aria-selected="false"
+                                th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|">진척률</button>
+                        </li>
+                    </ul>
+                </nav>
+            </div> <!-- page title 끝 -->
+
+            <section class="section">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body" style="padding: 40px 70px 40px 70px;">
+                                <div style="margin: 20px 0px; height: 40px">
+                                    <!-- 검색창 -->
+                                    <div class="search-bar" style="padding-bottom:20px">
+                                        <form class="search-form d-flex align-items-center" method="GET" action="board-list" style="justify-content: right;">
+                                            <div style="border: 1px solid #E0E5EE; border-radius: 15px;">
+                                                <!-- input hidden으로 session.id, pj_num 값 가져오기 -->
+                                                <input type="hidden" name="pj_num" th:value="${pjNum}">
+                                                <input type="hidden" name="sessionId" th:id="${session.user_id}"></input>
+
+                                                <select name="searchType" id="searchType" class="form-select" style="float: left; height: 34px; width: 120px; margin: 10px; border: none">
+                                                    <!-- <option value="all" th:selected="${pageVO.cri.searchType=='all'}">전체</option> -->
+                                                    <option value="boardCategory" th:selected="${pageVO.cri.searchType=='boardCategory'}">카테고리</option>
+                                                    <option value="boardTitle" th:selected="${pageVO.cri.searchType=='boardTitle'}">글 제목</option>
+                                                    <option value="boardWriter" th:selected="${pageVO.cri.searchType=='boardWriter'}">작성자</option>
+                                                    <option value="boardRegdate" th:selected="${pageVO.cri.searchType=='boardRegdate'}">작성일</option>
+                                                    <option value="boardStartdate" th:selected="${pageVO.cri.searchType=='boardStartdate'}">시작일</option>
+                                                    <option value="boardEnddate" th:selected="${pageVO.cri.searchType=='boardEnddate'}">종료일</option>
+                                                </select>
+
+                                                <input type="hidden" name="amount" th:value="${pageVO.cri.amount}">
+                                                <input type="text" name="search" id="search" th:value="${pageVO.cri.search}" placeholder="Search" title="Enter search keyword" style="border: none; padding-top: 15px; outline: none;">
+                                                <button type="submit" title="Search" style="background-color: transparent; border: none; padding-right: 18px">
+                                                    <i class="bi bi-search"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- 결과, 몇개씩 보기 -->
+                                <div style="padding-top:20px">
+                                    <div style="padding-bottom: 10px; float: left; font-size: 20px">
+                                        결과: [[${count}]]건
+                                    </div>
+                                    <select id="handleAmount" class="form-select"
+                                        style="float: right; height: 34px; width: 140px; margin-bottom: 20px">
+                                        <option value="10" th:selected="${pageVO.amount}==10">10개씩 보기</option>
+                                        <option value="20" th:selected="${pageVO.amount}==20">20개씩 보기</option>
+                                        <option value="50" th:selected="${pageVO.amount}==50">50개씩 보기</option>
+                                    </select>
+                                </div>
+
+                                <!-- 게시판 -->
+                                <table class="table">
+                                    <thead>
+                                        <tr style="border: 1px solid; border-color: inherit;">
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">글번호</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">카테고리</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">글 제목</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">작성자</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">시작일</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">종료일</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">작성일시</th>
+                                            <th scope="col" style="border: 1px solid; border-color: inherit; text-align: center;">진행 과정</th>
+                                            <!-- 완료, 진행 중 -->
+                                        </tr>
+                                    </thead>
+
+                                    <!-- 게시글이 없을 경우 -->
+                                    <th:block th:if="${boardList.empty}">
+                                        <tr>
+                                            <td colspan="8" style="border: 1px solid; border-color: inherit; text-align: center;">
+                                                등록된 게시글이 없습니다.
+                                            </td>
+                                        </tr>
+                                    </th:block>
+
+                                    <!-- 게시글이 있을 경우 -->
+                                    <th:block th:each="boardVO, status : ${boardList}">
+                                        <tr class="trCover">
+                                            <th scope="row" style="border: 1px solid; border-color: inherit; text-align: center;">
+                                                [[${boardVO.rowNum}]]
+                                            </th>
+                                            <td style="border: 1px solid; border-color: inherit; text-align: center;">
+                                                [[${boardVO.boardCategory}]]
+                                            </td>
+                                            <td style="border: 1px solid; width: 20%; border-color: inherit;">
+                                                <a th:href="@{board-content(pj_num=${pjNum}, board_num=${boardVO.boardNum})}">[[${boardVO.boardTitle}]]</a>
+                                            </td>
+                                            <td th:id=${boardVO.boardWriter} style="border: 1px solid; width: 10%; border-color: inherit; text-align: center;">
+                                                [[${boardVO.userName}]]
+                                            </td>
+                                            <td style="border: 1px solid; width: 10%; border-color: inherit; text-align: center;">
+                                                [[${boardVO.boardStartdate}]]
+                                            </td>
+                                            <td style="border: 1px solid; width: 10%; border-color: inherit; text-align: center;">
+                                                [[${boardVO.boardEnddate}]]
+                                            </td>
+                                            <td style="border: 1px solid; width: 20%; border-color: inherit; text-align: center;" th:text="${#dates.format(boardVO.boardRegdate, 'yyyy-MM-dd HH시 mm분')}">
+                                                [[${boardVO.boardRegdate}]]
+                                            </td>
+                                            <td id="boardProcess" th:name="boardProcess" th:text="${boardVO.boardProcess}" style="border: 1px solid; width: 10%; border-color: inherit; text-align: center;">
+                                                [[${boardVO.boardProcess}]]
+                                            </td>
+                                        </tr>
+                                    </th:block>
+                                </table>
+
+                                <!-- 글 작성 버튼  -->
+                                <div style="display: flex; justify-content: right;">
+                                    <button name="boardRegist" type="button" onclick="boardRegsit()"
+                                        class="btn btn-primary">글 작성</button>
+                                </div>
+                            </div>
+
+                            <!-- 페이지네이션 -->
+                            <nav aria-label="Page navigation example"
+                                style="display: flex; justify-content: center; padding-bottom: 40px;">
+                                <ul class="pagination">
+
+                                    <!-- 이전 버튼 -->
+                                    <li th:class="${pageVO.prev==true ? 'page-item' : 'page-item disabled'}">
+                                    	<a class="page-link" th:href="@{board-list(pj_num=${pjNum}, page=${pageVO.start-1}, amount=${pageVO.amount}, search=${pageVO.cri.search}, searchType=${pageVO.cri.searchType})}">이전</a>
+                                    </li>
+
+                                    <!-- 페이징 처리 -->
+                                    <th:block th:each="page : ${pageVO.pageList}">
+                                        <li th:class="${page==pageVO.page ? 'page-item active' : 'page-item'}">
+                                        <a class="page-link" th:href="@{board-list(pj_num=${pjNum}, page=${page}, amount=${pageVO.cri.amount}, search=${pageVO.cri.search}, searchType=${pageVO.cri.searchType})}">[[${page}]]</a>
+                                        </li>
+                                    </th:block>
+
+                                    <!-- 다음 버튼 -->
+                                    <li th:class="${pageVO.next==true ? 'page-item' : 'page-item disabled'}">
+                                    <a class="page-link" th:href="@{board-list(pj_num=${pjNum}, page=${pageVO.end+1}, amount=${pageVO.amount}, search=${pageVO.cri.search}, searchType=${pageVO.cri.searchType})}">다음</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <!-- 페이지네이션 end -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</th:block>
+
+<script th:inline="javascript">
+    //10개, 20개, 50개 보기 핸들 이벤트
+    let handleAmount = document.getElementById("handleAmount");
+    let urlParams = new URLSearchParams(window.location.search);
+    let pjNum = urlParams.get('pj_num');
+    handleAmount.onchange = function (e) {
+        let search_type = document.getElementById("searchType");
+        let search_type_value = search_type.options[search_type.selectedIndex].value;
+        let search_value = document.getElementById("search").value;
+        if (search_value != '') {
+            location.href = "board-list?pj_num=" + pjNum + "&page=1&amount=" + e.target.value + "&searchType=" + search_type_value + "&search=" + search_value;
+        } else {
+            location.href = "board-list?pj_num=" + pjNum + "&page=1&amount=" + e.target.value;
+        }
+    };
+
+    //옵저버 멤버 가져와서 옵저버 멤버와 session.id값이 같으면 글쓰기 버튼 감추기 기능
+    $(document).ready(function () {
+        // 모든 tr 요소를 선택
+        $("tr").each(function () {
+            // 현재 tr 요소에서 boardProcess 값을 가져옴
+            let boardProcess = $(this).find("#boardProcess").text();
+            // boardProcess 값이 "완료"일 경우, 배경색을 변경
+            if (boardProcess === "완료") {
+                $(this).css("background-color", "#BDECB6");
+            }
+        });
+
+        $.ajax({
+            url: "../get-obmember",
+            type: "GET",
+            dataType: "json",
+            async: true,
+            data: { pj_num: pjNum },
+            success: function (response) {
+                //서버에서 반환된 데이터를 처리
+                //버튼 값 가져와서 안보이게 처리
+                let sessionId = $("input[name='sessionId']").attr("id");
+                for (let i = 0; i < response.length; i++) {
+                    if (response[i].toString() === sessionId.toString()) {
+                        // session.id와 같은 경우 버튼을 안보이게 처리
+                        $("button[name='boardRegist']").prop("disabled", true)
+                    }
+                }
+            },
+            error: function (xhr, status, error) {
+                // 요청에 실패한 경우 처리합니다.
+                alert("옵저버 멤버를 가져올 수 없습니다.");
+                console.error(xhr.responseText);
+            }
+        });
+    });
+
+    //글 작성 누를 때 pj_num 가지고 가기
+    function boardRegsit() {
+        location.href = "board-regist?pj_num=" + pjNum;
+    }
+
+</script>
+
+</html>

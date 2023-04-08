@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+
+	<div class="wrap">
+		<main id="main" class="main">
+
+			<div class="pagetitle">
+				<h1 class="card-title">
+					 [[${pjVO.pjName}]]
+				</h1>
+				<h6 style="padding-bottom: 20px">
+					 [[${pjVO.pjDescription}]]
+				</h6>
+
+				<nav>
+
+					<!-- Bordered Tabs Justified -->
+					<ul class="nav nav-tabs nav-tabs-bordered d-flex"
+						id="borderedTabJustified" role="tablist">
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="home-tab" data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-home" type="button"
+								role="tab" aria-controls="home" aria-selected="true"
+								th:onclick="|location.href='@{/project/project-started(pj_num=${param.pj_num})}'|">홈</button>
+							<!-- 받아온get값 다른페이지로 넘기기 -->
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="profile-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-profile" type="button"
+								role="tab" aria-controls="profile" aria-selected="false"
+								th:onclick="|location.href='@{/userboards/board-list(pj_num=${param.pj_num})}'|">게시판</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-calendar(pj_num=${param.pj_num})}'|">캘린더</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100 active" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|">진척률</button>
+						</li>
+					</ul>
+				</nav>
+			</div>
+			<!-- End Page Title -->
+
+			<div class="pagetitle">
+				<nav>
+					<ol class="breadcrumb">
+						<li class="breadcrumb-item"
+							th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|"
+							style="cursor: pointer">팀 진척률 보기</li>
+						<li class="breadcrumb-item active">내 진척률 보기</li>
+					</ol>
+				</nav>
+			</div>
+			<!-- End Page Title -->
+
+			<div class="col-lg-12">
+				<div class="card">
+					<div class="card-body">
+						<h5 class="card-title">완료 현황</h5>
+
+						<!-- Radial Bar Chart -->
+						<div id="radialBarChart"></div>
+
+						<script>
+		                document.addEventListener("DOMContentLoaded", () => {//로드될 때 ajax 불러옴
+		                	$.ajax({
+		                		url:'../get-member-category-chart?pj_num=[[${pjVO.pjNum}]]&user_id=[[${session.user_id}]]', //해당팀 자기 진행률 json 요청
+		                		type:'get',
+		                		success:function(result){
+		                			var data = JSON.parse(result); //json 변환
+					                  new ApexCharts(document.querySelector("#radialBarChart"), {
+					                    series: data.progress, //진행률 데이터
+					                    chart: {
+					                      height: 350,
+					                      type: 'radialBar',
+					                      toolbar: {
+					                        show: true
+					                      }
+					                    },
+					                    plotOptions: {
+					                      radialBar: {
+					                        dataLabels: {
+					                          name: {
+					                            fontSize: '22px',
+					                          },
+					                          value: {
+					                            fontSize: '16px',
+					                          },
+					                          total: {
+					                            show: true,
+					                            label: '전체진척률 평균',
+					                            formatter: function(w) {
+					                              // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
+					                              var sumCal= 0;
+					                              data.progress.forEach(item=> sumCal = sumCal + parseInt(item)); //진척률 합
+
+					                              return parseInt(sumCal/data.progress.length)+'%'; //진척률 평균
+					                            }
+					                          }
+					                        }
+					                      }
+					                    },
+					                    labels: data.category, //카테고리 데이터
+					                  }).render();
+
+		                		},
+		                		error:function(){
+
+		                		}
+		                	});
+		                });
+              			</script>
+						<!-- End Radial Bar Chart -->
+
+					</div>
+				</div>
+			</div>
+
+
+		</main>
+		<!-- End #main -->
+	</div>
+</th:block>
+
+</html>

@@ -1,0 +1,446 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+<style>
+.hidden {
+  display: none;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+</style>
+
+	<div class="wrap">
+
+		<main id="main" class="main">
+
+			<div class="pagetitle">
+				<h1 class="card-title">
+					 [[${pjVO.pjName}]]
+				</h1>
+				<h6 style="padding-bottom: 20px">
+					[[${pjVO.pjDescription}]]
+				</h6>
+
+				<nav>
+					<div style="display:none;" class="user_id">[[${session.user_id}]]</div>
+					<!-- Bordered Tabs Justified -->
+					<ul class="nav nav-tabs nav-tabs-bordered d-flex"
+						id="borderedTabJustified" role="tablist">
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100 active" id="home-tab"
+								data-bs-toggle="tab" data-bs-target="#bordered-justified-home"
+								type="button" role="tab" aria-controls="home"
+								aria-selected="true"
+								th:onclick="|location.href='@{/project/project-started(pj_num=${param.pj_num})}'|">홈</button> <!-- 받아온get값 다른페이지로 넘기기 -->
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="profile-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-profile" type="button"
+								role="tab" aria-controls="profile" aria-selected="false"
+								th:onclick="|location.href='@{/userboards/board-list(pj_num=${param.pj_num})}'|">게시판</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-calendar(pj_num=${param.pj_num})}'|">캘린더</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|">진척률</button>
+						</li>
+					</ul>
+				</nav>
+			</div>
+			<!-- End Page Title -->
+
+			<section class="section">
+				<div class="row">
+					<div class="col-xl-8">
+
+						<div class="card">
+							<div class="card-body">
+								<h5 class="card-title">대화 내용</h5>
+								<div class="chat-content"
+									style="border: none; height: 480px; overflow: auto;">
+
+								</div>
+
+								<div class="list-group-item-secondary">
+									<div style="padding: 20px 10px">
+
+										<div class="form-floating">
+											<textarea class="form-control" placeholder="입력"
+												id="floatingTextarea" style="height: 100px;"
+												onkeypress="if( event.keyCode == 13 ){if(event.shiftKey){} else {enterKey();}}"></textarea>
+											<label for="floatingTextarea">줄바꿈 Shift+Enter / 입력
+												Enter 입니다.</label>
+										</div>
+
+
+
+									</div>
+
+								</div>
+
+							</div>
+
+						</div>
+
+					</div>
+					<div class="col-xl-4">
+						<div class="card">
+
+							<div class="card-body">
+
+								<h5 class="card-title" style="padding-bottom: 5px">참여자</h5>
+								<input type="text" placeholder="검색" onkeyup="filter()"
+									id="search" class="form-control">
+								<!-- Default Table -->
+								<table class="table">
+									<thead>
+										<tr>
+											<th scope="col"></th>
+											<th scope="col">이름</th>
+											<th scope="col">부서</th>
+											<th scope="col">직급</th>
+											<th scope="col">구분</th>
+
+										</tr>
+									</thead>
+									<tbody id="listInner">
+
+										<tr class="searchUser" th:each="vo, status: ${list}">
+											<th scope="row" th:text="${status.count}"></th>
+											<td class="name">[[${vo.userName}]]</td>
+											<td class="department">[[${vo.departmentName}]]</td>
+											<td class="position">[[${vo.userPosition}]]</td>
+											<td class="observer">[[${vo.isObserver==true?"옵저버":"팀원"}]]</td>
+
+										</tr>
+
+
+									</tbody>
+								</table>
+
+							</div>
+
+						</div>
+					</div>
+
+
+				</div>
+			</section>
+
+		</main>
+		<!-- End #main -->
+
+	</div>
+
+</th:block>
+<script>
+	var sessionId = document.querySelector(".user_id").innerHTML; //세션값 히든태그에 담아 받아주기
+	var chatList = $(".chat-content"); //채팅내용 담은 변수
+	var chatScroll = document.querySelector(".chat-content");
+	// 스크롤 위치 기억
+	function rememberScrollPosition() {
+		scrollTop = chatScroll.scrollTop;
+	}
+
+	// 스크롤 위치 이동
+	function restoreScrollPosition() {
+		chatScroll.scrollTop = chatScroll.scrollHeight;
+	}
+	//chatNum 담을 함수
+	var chatNum = 0;
+	//chatList길이 담을 함수
+	var chatLength = 0;
+	//url받아서 겟한 값만 남기도록 처리하는 함수
+	function getUrlParameter(name) {
+ 	 name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+	 var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+	 var results = regex.exec(location.search);
+	 return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+	}
+
+	//url값. 받아서 겟값만 남기도록 처리할 예정
+	var pj_num = getUrlParameter('pj_num');
+
+	//채팅 받아오기
+	function getChat() {
+		$.ajax({
+					url : "../get-chat",
+					type : "get",
+					data : {"pj_num":pj_num},
+					dataType : "json",
+					success : function(response) {
+						// 스크롤 위치 기억
+						rememberScrollPosition();
+						//챗리스트 비우기
+						chatList.empty();
+						//채팅 길이를 담기
+						chatLength=response.length;
+						for (var i = 0; i < response.length; i++) {
+
+							var str = "";
+							//챗넘버 갱신
+							chatNum = response[i].chat_num;
+							str += '<div style="display: flex;"><div><img src="'+response[i].userImg+'" width="40px" height="40px" alt="Profile" class="rounded-circle" /></div>';
+							str += '<div style="margin-left: 15px">';
+							str += '<div><span style="font-weight: 1000">'
+									+ response[i].userName
+									+ '</span> <span style="font-size: 10px">'
+									+ response[i].chatRegdate
+									+ '</span>  ';
+							str += '<span class="filter">';
+							str += '<a class="icon" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="bi bi-three-dots"></i></a>';
+							str += '<ul	class="dropdown-menu dropdown-menu-end dropdown-menu-arrow"><li class="dropdown-header text-start">';
+							str += '<h6>추가 작업</h6>';
+							str += '</li><li><a class="dropdown-item" onclick="copy(event)">복사</a></li>';
+								if(sessionId===response[i].chatWriter){
+							str += '<li onclick="toggleHidden(this)"><a class="dropdown-item dropdown-toggle" style="color: blue;" >수정</a></li>';
+							str += '<li class="hidden" style="display:none;"><textarea class="form-control modifyTextarea" placeholder="입력">'
+									+response[i].chatContent.replaceAll("<br>","\r\n")
+									+'</textarea><button class="btn btn-outline-primary btn-sm" onclick="modifyChat(event, '+response[i].chatNum+');" style="float:right;margin-top:5px">저장</buton></li>';
+							str += '<li><a class="dropdown-item" onclick="deleteChat('+response[i].chatNum+');" style="color: red">삭제</a></li>';}
+							str += '</ul></span></div>'
+							str += '<div class="chatContentWrap"><span class="chatContent">'
+									+ response[i].chatContent
+									+ '</span></div>';
+							str += '</div>';
+
+
+							str += '</div><hr style="margin:;0 0 1px 0"/>';
+
+							chatList.append(str);
+							// 스크롤 위치 이동
+							restoreScrollPosition();
+						}
+
+					},
+					error : function(err) {
+						console.log("Error");
+					}
+
+				})
+	}
+	$(document).ready(getChat);
+
+	//추가로 들어온 채팅을 바로 통신해서 전달..getchat과 동일
+	function addChat() {
+		$.ajax({
+					url : "../get-chat",
+					type : "get",
+					data : {"pj_num":pj_num},
+					dataType : "json",
+					success : function(response) {
+
+						for (let i = 0; i < response.length; i++) {
+							if(response[i].chatNum>chatNum){ //갱신한 챗넘보다 높은 챗넘만 추가로 전달
+							chatLength += 1;
+							var str = "";
+							chatNum = response[i].chatNum;
+							str += '<div style="display: flex;"><div><img src="'+response[i].userImg+'" width="40px" height="40px" alt="Profile" class="rounded-circle" /></div>';
+							str += '<div style="margin-left: 15px">';
+							str += '<div><span style="font-weight: 1000">'
+								+ response[i].userName
+								+ '</span> <span style="font-size: 10px">'
+								+ response[i].chatRegdate
+								+ '</span>  ';
+							str += '<span class="filter">';
+							str += '<a class="icon" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside"><i class="bi bi-three-dots"></i></a>';
+							str += '<ul	class="dropdown-menu dropdown-menu-end dropdown-menu-arrow"><li class="dropdown-header text-start">';
+							str += '<h6>추가 작업</h6>';
+							str += '</li><li><a class="dropdown-item" onclick="copy(event)">복사</a></li>';
+								if(sessionId===response[i].chatWriter){
+							str += '<li onclick="toggleHidden(this)"><a class="dropdown-item dropdown-toggle" style="color: blue;" >수정</a></li>';
+							str += '<li class="hidden" style="display:none;"><textarea class="form-control modifyTextarea" placeholder="입력">'
+								+response[i].chatContent.replaceAll("<br>","\r\n")
+								+'</textarea><button class="btn btn-outline-primary btn-sm" onclick="modifyChat(event, '+response[i].chatNum+');" style="float:right;margin-top:5px">저장</buton></li>';
+							str += '<li><a class="dropdown-item" onclick="deleteChat('+response[i].chatNum+');" style="color: red">삭제</a></li>';}
+							str += '</ul></span></div>'
+							str += '<div class="chatContentWrap"><span class="chatContent">'
+								+ response[i].chatContent
+								+ '</span></div>';
+							str += '</div>';
+
+							chatList.append(str);
+							// 스크롤 위치 이동
+							restoreScrollPosition();
+							}
+						}
+
+					},
+					error : function(err) {
+						console.log("Error");
+					}
+
+				})
+	}
+
+	//지속적으로 채팅리스트 변경값 체크
+	function checkChat(){
+
+		$.ajax({
+			url : "../get-chat",
+			type : "get",
+			data : {"pj_num":pj_num},
+			dataType : "json",
+			success : function(response){
+
+				if(response[response.length-1].chatNum>chatNum){ //마지막채팅번호보다 챗팅넘버가 크면 챗 추가
+					addChat();
+				} else if(response.length != chatLength){ //채팅길이가 달라지면.즉 챗팅이 삭제되면 채팅값 다시 받아오기
+					getChat();
+				}
+
+			}
+
+		})
+	}
+
+	 setInterval( checkChat , 500); //0.5초마다 채팅값 확인
+
+
+
+	//입력 창
+	var chat_content = document.getElementById('floatingTextarea');
+
+	//엔터입력 시 함수실행
+	function enterKey(e) {
+
+		if(chat_content.value.trim()===''){
+			event.preventDefault(); //공백 입력 막음
+			return;
+		};
+
+		$.ajax({
+			url : "../set-chat",
+			type : "get",
+			data : {
+				"chat_content" : chat_content.value.replace(/</gi,'&lt;').replace(/>/gi,'&gt;').replace(/\n/g, "<br>") , //줄바꿈 시 db에 줄바꾼것을 인식하기위해
+				"pj_num" : pj_num
+			},
+			dataType : "JSON",
+			success : function(result) {
+				document.getElementById('floatingTextarea').value = ''; //입력 후 입력창 비워줌
+
+			},
+			error : function(err) {
+				alert("error")
+			}
+
+		})
+
+	}
+
+	//채팅삭제실행
+	function deleteChat(chat_num){
+
+		$.ajax({
+			url : "../delete-chat",
+			type : "get",
+			data : {"chat_num" : chat_num},
+			success : function(result){
+				alert("삭제 완료");
+				chatLength -=1;
+				getChat();
+			},
+			error : function(error) {
+				alert("삭제 실패");
+			}
+		})
+
+	}
+
+
+	//수정 textarea 숨겨져있음. 토글 방식으로 나타남
+	function toggleHidden(element) {
+		  const hiddenLi = element.nextElementSibling;
+		  hiddenLi.style.display = hiddenLi.style.display === "block" ? "none" : "block";
+		}
+
+	const toggleButtons = document.querySelectorAll('.dropdown-toggle');
+
+	  toggleButtons.forEach(button => {
+	    button.addEventListener('click', event => {
+	      event.stopPropagation();
+	      const dropdownMenu = event.target.closest('.dropdown').querySelector('.dropdown-menu');
+	      dropdownMenu.classList.toggle('show');
+	    });
+	  });
+
+
+	// 수정 입력 창
+	 function modifyChat(event, chat_num){
+
+			var parent = event.target.parentNode;
+		    var modify_content = parent.querySelector('.modifyTextarea');
+
+		 $.ajax({
+				url : "../modify-chat",
+				type : "get",
+				data : {"chat_num" : chat_num,
+						"modify_content": modify_content.value.replace(/</gi,'&lt;').replace(/>/gi,'&gt;').replace(/\n/g, "<br>") //줄바꿈 시 db에 줄바꾼것을 인식하기위해
+						},
+				dataType : "JSON",
+				success : function(result){
+					alert("수정 완료");
+					getChat();
+				},
+				error : function(error) {
+					alert("수정 실패");
+				}
+			})
+	 }
+
+	//채팅 복사
+	function copy(event){
+			var textArea = document.createElement("textarea");
+			var copyText = event.target.parentNode.parentNode.parentNode.parentNode.parentNode
+						.querySelector(".chatContentWrap").querySelector(".chatContent");
+
+			textArea.value = copyText.innerHTML.replaceAll(/\n/g,'<br>');
+			textArea.value = copyText.innerHTML.replaceAll("<br>","\r\n");
+			textArea.value = copyText.innerHTML.replace(/&lt;/gi,"<");
+			textArea.value = copyText.innerHTML.replace(/&gt;/gi,">");
+
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand("Copy"); //복사하는 함수
+			textArea.remove();
+	}
+
+
+
+	// 실시간 검색 구현
+	function filter() {
+		let search = document.getElementById("search").value.toLowerCase();
+		let listInner = document.getElementById("listInner");
+		let searchUser = document.getElementsByClassName("searchUser");
+		let name = listInner.getElementsByClassName("name");
+		let department = listInner.getElementsByClassName("department");
+		let position = listInner.getElementsByClassName("position");
+		let observer = listInner.getElementsByClassName("observer");
+
+		for (let i = 0; i < name.length; i++) {
+			if (name[i].innerHTML.toLowerCase().includes(search)
+					|| department[i].innerHTML.toLowerCase().includes(search)
+					|| position[i].innerHTML.toLowerCase().includes(search)
+					|| observer[i].innerHTML.toLowerCase().includes(search)) {
+				searchUser[i].style.display = "";
+			} else {
+				searchUser[i].style.display = "none";
+			}
+		}
+	}
+
+</script>
+</html>

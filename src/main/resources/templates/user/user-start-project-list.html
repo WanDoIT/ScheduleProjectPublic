@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout2 :: 함수( ~{:: .wrap } ) }">
+
+<div class="wrap">
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>참여 프로젝트</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item active" onclick="location.href='/'" style="cursor:pointer">진행중인 프로젝트</li>
+           <li class="breadcrumb-item" onclick="location.href='/2'" style="cursor:pointer">즐겨찾는 프로젝트</li>
+           <li class="breadcrumb-item" onclick="location.href='/3'" style="cursor:pointer">종료된 프로젝트</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    <section class="section dashboard">
+      <div class="row">
+
+        <!-- 왼쪽 컬럼 시작 -->
+        <div class="col-lg-8">
+          <div class="row projectList">
+
+            <!--
+            프로젝트 2
+              <div class="col-xxl-4 col-md-6">
+              <div class="card info-card sales-card">
+
+                <div class="card-body"><br/>
+                  <i class="bi bi-star"></i>
+                  <h5 class="card-title">프로젝트 명 </br>
+                  <span>프로젝트 주제</span>
+                  </h5>
+
+				 초대된 인원만큼 인원 수 표시
+                  <i class="bi bi-person"><span> 1</span></i>
+                </div>
+              </div>
+            </div>
+            프로젝트 2 완료
+           -->
+            <!-- End Sales Card -->
+
+
+
+
+          </div>
+        </div>
+        <!-- 왼쪽 컬럼 끝 -->
+
+        <!-- 오른쪽 컬럼 시작 -->
+        <div class="col-lg-4">
+
+          <!-- Recent Activity -->
+          <div class="card">
+
+
+            <div class="card-body">
+            <h5 class="card-title">프로젝트 마감일정<span id="today"></span></h5>
+
+              <div class="activity" id="projectList2">
+
+               <!--  <div class="activity-item d-flex">
+                  <div class="activite-label">32 min</div>
+                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
+                  <div class="activity-content" style="width:80%">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명@@@@@@@@@@@@@@@@@@@@@@
+                  </div>
+                </div> -->
+
+                <!-- <div class="activity-item d-flex">
+                  <div class="activite-label">56 min</div>
+                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
+                  <div class="activity-content">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명
+                  </div>
+                </div>
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 hrs</div>
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명
+                  </div>
+                </div>
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">1 day</div>
+                  <i class='bi bi-circle-fill activity-badge text-info align-self-start'></i>
+                  <div class="activity-content">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명
+                  </div>
+                </div>
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 days</div>
+                  <i class='bi bi-circle-fill activity-badge text-warning align-self-start'></i>
+                  <div class="activity-content">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명
+                  </div>
+                </div>
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">4 weeks</div>
+                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
+                  <div class="activity-content">
+                    <a href="#" class="fw-bold text-dark">프로젝트 명</a> 업무명
+                  </div>
+                </div> -->
+
+              </div>
+
+            </div>
+
+          </div><!-- End Recent Activity -->
+
+
+
+        </div>
+        <!-- 오른쪽 컬럼 끝 -->
+
+      </div>
+    </section>
+<div style="display:none;" class="user_id">[[${session.user_id}]]</div>
+  </main><!-- End #main -->
+</div>
+</th:block>
+
+<script th:inline="javascript">
+	var sessionId = document.querySelector(".user_id").innerHTML; //세션값 히든태그에 담아 받아주기
+	//오늘날짜 년월일만 저장.
+	document.getElementById("today").innerHTML=" | "+new Date().toISOString().substring(0,10);
+
+
+	var msg = JSON.parse('[[${msg}]]');
+
+	if(msg != null) {
+		alert(msg);
+	}
+	//메인프로젝트 리스트
+	var projectList = $(".projectList");
+	//우측 dday 프로젝트 리스트
+	var projectList2 = $("#projectList2");
+	//프로젝트 값 받아오기
+	function getProjectList(){
+
+		$.ajax({
+			url : "../get-project-list",
+			type : "get",
+			dataType : "json",
+			success : function(response){
+				projectList.empty();
+				projectList2.empty();
+				for (var i = 0; i < response.length; i++) {
+
+				 if(response[i].pjActive==true){
+
+					//프로젝트 담기
+				var str = "";
+				str += '<div class="col-xxl-4 col-md-6">';
+				str += '<div class="card info-card sales-card" style="height:250px">';
+				str += '<div class="card-body"><br/>';
+					if(response[i].pjBookmark==true){
+						str += '<a style="cursor:pointer" onclick="changeBookmark(`'+response[i].userId+'`,'+response[i].pjNum+','+response[i].pjBookmark+')">⭐</a>';
+					} else {
+						str += '<a class="bi bi-star" onclick="changeBookmark(`'+response[i].userId+'`,'+response[i].pjNum+','+response[i].pjBookmark+')" style="cursor:pointer"></a>';
+					}
+					if(response[i].observer==false){
+						str += '<span>&nbsp;&nbsp;팀원</span>';
+					} else {
+						str += '<span>&nbsp;&nbsp;옵저버</span>';
+					}
+
+				str += '<span class="card-title">';
+				if(sessionId===response[i].pjWriter){
+				str += '<div class="filter">';
+				str += '<a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>';
+				str += '<ul	class="dropdown-menu dropdown-menu-end dropdown-menu-arrow"><li class="dropdown-header text-start">';
+				str += '<h6>추가 작업</h6>';
+				str += '<li onclick="toggleHidden(this)"><a class="dropdown-item" style="color: blue;" href="/project/project-change?pj_num='+ response[i].pjNum +'" >수정</a></li>';
+
+				str += '<li><a class="dropdown-item" onclick="deleteProject('+response[i].pjNum+');" style="color: red; cursor:pointer" >삭제</a></li>';
+				str += '</ul></div>';
+					}
+				str += '</span><br>';
+				str += '<span class="card-title"><i class="bi bi-person-fill " style="float:right"><a style="display:inline-block;width:25px;text-align:center">'+response[i].pjMembercount+'</a></i><span style="float:right;padding-top:2px">팀 &nbsp;&nbsp; 원&nbsp;</span></span><br>';
+				str += '<span class="card-title"><i class="bi bi-person " style="float:right"><a style="display:inline-block;width:25px;text-align:center">'+response[i].pjObservercount+'</a></i><span style="float:right;padding-top:2px">옵저버&nbsp;</span></span>';
+				str += '<a href="/project/project-started?pj_num='+response[i].pjNum+'"><h5 class="card-title" style="height:80px">'+response[i].pjName+' <br>';
+				//str += '<span>'+response[i].pjDescription+'</span>';
+				str += '</h5></a>';
+					<!--  초대된 인원만큼 인원 수 표시 -->
+				str += '<span class="card-title"><span>시작일 : '+response[i].pjStartdate+'</span><br>';
+				str += '<span>종료일 : '+response[i].pjEnddate+'</span></span><br>';
+
+				str += '</div>';
+				str += '</div>';
+				str +=  '</div>';
+
+				projectList.append(str);
+				}
+				}
+
+				for (var i = 0; i < response.length; i++) {
+					 if(response[i].pjActive==true){
+					//프로젝트 담기
+				var str = "";
+				var enddate= new Date(response[i].pjEnddate);
+     			var now = new Date();
+     			var distance = enddate.getTime() - now.getTime(); //현재일자와 마감일자 비교
+      			var dday = Math.ceil(distance/(1000*60*60*24)); //차이나는 밀리터리 초를 1일로 환산
+
+				str += '<div class="activity-item d-flex">';
+				str += '<div class="activite-label" style="width:40px">D - '+dday+'</div>';
+				str += '<i class="bi bi-circle-fill activity-badge align-self-start" style="color:hwb('+dday+'deg 0% 0%)"></i>';
+				str += '<div class="activity-content" style="width:80%">';
+				str +=  '<a href="#" class="fw-bold text-dark">'+response[i].pjName+'</a>';
+				str += '</div>';
+				str += '</div>';
+
+				projectList2.append(str);
+				}
+			}
+
+			},
+			error : function(e){
+				alert("프로젝트 리스트 조회 실패")
+			}
+		})
+		}
+
+		$(document).ready(getProjectList);
+
+		//북마크 변경하는 함수
+		function changeBookmark(user_id, pj_num, pj_bookmark){
+			$.ajax({
+				url : "../change-bookmark",
+				type : "get",
+				data : {
+					"user_id" : user_id, "pj_num" : pj_num, "pj_bookmark" : pj_bookmark
+				},
+				dataType : "json",
+				success : function(result){
+					getProjectList();
+				},
+				error : function(e){
+					alert("변경 실패");
+				}
+
+			})
+
+		}
+
+		//프로젝트 삭제
+		function deleteProject(pj_num){
+
+			$.ajax({
+				url : "../delete-project",
+				type : "get",
+				data : {
+					"pj_num" : pj_num
+				},
+				dataType : "json",
+				success : function(result){
+					alert("삭제되었습니다.");
+					getProjectList();
+				},
+				error : function(e){
+					alert("삭제실패");
+				}
+			})
+
+		}
+
+
+
+
+
+</script>
+<script th:inline="javascript">
+//뒤로가기 막기 이벤트
+window.history.forward();
+function noBack(){
+	window.history.forward();
+}
+</script>
+
+
+</html>

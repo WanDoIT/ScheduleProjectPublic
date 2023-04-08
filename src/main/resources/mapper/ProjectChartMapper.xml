@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+  <mapper namespace="com.choongang.scheduleproject.project.service.ProjectChartMapper">
+	<!-- 프로젝트 팀 당 카테고리 진행률 가져옴 -->
+	<select id="getTeamCategoryChart" resultType="ChartVO">
+		select board_category,
+			   (round((select count(board_process) from user_board where board_process = '완료' and pj_num = #{pjNum} and board_category = T.board_category )/
+			   (select count(board_process) from user_board  where pj_num = #{pjNum} and board_category = T.board_category) * 100) ) progress
+		from user_board T
+        where pj_num = #{pjNum}
+        group by board_category
+	</select>
+	<!-- 프로젝트 팀 당 해당인원 진행률 가져옴 -->
+	<select id="getTeamMemberChart" resultType="ChartVO">
+		select u.user_name ,
+			   (round(((select count(b.board_process) from user_board b where b.board_writer = u.user_id and b.board_process = '완료' and b.pj_num=#{pjNum} ) /
+			   (select count(b.board_process) from user_board b where b.board_writer = u.user_id and b.pj_num=#{pjNum}) )*100)) progress
+		from user_user u
+		left join mapping m
+		on u.user_id = m.user_id and m.is_observer=false
+		where m.pj_num = #{pjNum}
+	</select>
+	<!-- 프로젝트 팀에 해당하는 자기자신 카테고리별 진행률 -->
+	<select id="getMemberCategoryChart" resultType="ChartVO">
+		select board_category,
+			   (round((select count(board_process) from user_board where board_process = '완료' and pj_num = #{pjNum} and board_writer = #{userId} and board_category = T.board_category)/
+			   (select count(board_process) from user_board  where pj_num = #{pjNum} and board_writer = #{userId} and board_category = T.board_category) * 100) ) progress
+		from user_board T
+        where pj_num = #{pjNum} and board_writer = #{userId}
+        group by board_category
+	</select>
+  </mapper>

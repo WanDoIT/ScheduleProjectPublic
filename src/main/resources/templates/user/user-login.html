@@ -1,0 +1,109 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+<title>중앙 소프트 일정관리 시스템</title>
+<meta content="" name="description">
+<meta content="" name="keywords">
+
+<!-- Favicons -->
+<link href="/assets/img/logo3.png" rel="icon">
+<link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+<!-- Google Fonts -->
+<link href="https://fonts.gstatic.com" rel="preconnect">
+<link
+	href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+	rel="stylesheet">
+
+<!-- Vendor CSS Files -->
+<link href="/assets/vendor/bootstrap/css/bootstrap.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css"
+	rel="stylesheet">
+<link href="/assets/vendor/boxicons/css/boxicons.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/quill/quill.snow.css" rel="stylesheet">
+<link href="/assets/vendor/quill/quill.bubble.css" rel="stylesheet">
+<link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+<link href="/assets/vendor/simple-datatables/style.css" rel="stylesheet">
+
+<!-- Template Main CSS File -->
+<link href="/assets/css/style.css" rel="stylesheet">
+<script src="/assets/js/jquery-1.12.1.min.js"></script>
+<script src="/assets/js/jquery-ui.min.js"></script>
+
+
+<!-- =======================================================
+  * Template Name: NiceAdmin - v2.5.0
+  * Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+
+
+</head>
+<div class="wrap">
+	<main id="main" class="main" style="margin: 0 auto">
+		<div class="pagetitle" style="text-align: center; padding-top: 100px">
+			<h1>Project Management 로그인</h1>
+		</div>
+		<!-- End Page Title -->
+		<section class="section">
+			<div class="row">
+				<div class="col-lg-4" style="margin: 0 auto">
+					<div class="card">
+						<div class="card-body">
+							<div class="pt-4 pb-2"></div>
+							<form class="row g-3" id=Login action="/user/login" method="post">
+								<div class="col-12">
+									<div>
+										<label for="yourUsername" class="form-label">아이디</label> <span id="idWarning" style="color: red; font-size: 5px; float: right"></span>
+									</div>
+									<div>
+										<input type="text" name="userId" class="form-control" id="user_id" required>
+									</div>
+								</div>
+								<div class="col-12">
+									<div>
+										<label for="yourPassword" class="form-label">비밀번호</label> <span id="pwWarning" style="color: red; font-size: 5px; float: right"></span>
+									</div>
+									<input type="password" name="userPw" class="form-control"
+										id="user_pw" required>
+								</div>
+								<!-- <div class="col-12">
+                      				<div class="form-check">
+                        			<input class="form-check-input" type="checkbox" name="remember" value="true" id="rememberMe">
+                        			<label class="form-check-label" for="rememberMe">아이디 기억하기</label>
+                      				</div>
+                    				</div> -->
+								<div class="col-12">
+									<a href="/user/user-find-id" style="float: left">아이디 찾기</a> 
+									<a href="/user/user-reset-pw" style="float: right">비밀번호 초기화하기</a>
+								</div>
+								<div class="col-13">
+									<button class="btn btn-primary" type="button" onclick="loginCheck()" style="width: 49%;">로그인하기</button>
+									<button style="width: 49%;" class="btn btn-primary loginRegister" type="button" onclick="location.href='/user/user-register'">회원가입</button>
+								</div>
+							</form>
+							<!-- <div class="loginWrap" style="padding: 1px">
+								<button class="btn btn-warning w-100 kakaoBtn" type="button" onclick="location.href='/user/kakao'">카카오 로그인</button>
+							</div> -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+	<!-- End #main -->
+</div>
+<script src="/assets/js/user-login.js"></script>
+<!-- 유효성 검사 코드 -->
+<script th:inline="javascript">
+	var msg = JSON.parse('[[${msg}]]');
+	if(msg != null) {
+		alert(msg);
+	}
+</script>
+</html>

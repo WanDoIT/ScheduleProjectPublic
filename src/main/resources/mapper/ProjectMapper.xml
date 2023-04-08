@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.scheduleproject.project.service.ProjectMapper">
+
+	<!-- 프로젝트 생성 -->
+	<insert id="regist" parameterType="ProjectVO">
+		insert into user_project 
+		(pj_name, pj_startdate, pj_enddate, pj_description, pj_writer)
+		values (#{pjName}, #{pjStartdate}, #{pjEnddate}, #{pjDescription}, #{pjWriter})
+
+		<selectKey keyProperty="pjNum" resultType="int" order="AFTER">
+			select last_insert_id()
+		</selectKey>
+	</insert>
+
+	<!-- 프로젝트 멤버 mapping에 insert -->
+	<insert id="registMember" parameterType="ProjectMemberVO">
+		insert into mapping
+		(pj_num, user_id, is_observer)
+		values (#{pjNum}, #{userId}, #{isObserver})
+	</insert>
+
+	<!-- 부서 목록 -->
+	<select id="getDepList" resultType="ProjectVO">
+		select department_name,
+		department_id from user_department
+	</select>
+
+	<!-- 부서별 인원 목록 -->
+	<select id="getDepMemberList" resultType="ProjectVO">
+		select user_name, user_id,
+		user_department.department_id
+		from user_user 
+		left join user_department
+		on user_user.department_id = user_department.department_id
+		where user_user.department_id =
+		#{departmentId};
+	</select>
+
+	<!-- 프로젝트 멤버 -->
+	<select id="getProjectMember" resultType="UserVO">
+		select u.user_name, u.user_id,
+		d.department_name, u.user_position,m.is_observer from user_user
+		as u inner join
+		user_department as d on u.department_id =
+		d.department_id
+		right join
+		mapping as m on m.user_id = u.user_id
+		where m.pj_num = #{pjNum}
+		order by  m.is_observer,
+			case u.user_position
+        	  when '부장' then 1
+          	  when '차장' then 2
+          	  when '과장' then 3
+           	  when '대리' then 4
+           	  when '사원' then 5
+            	else 6
+        end
+       ;
+	</select>
+
+	<!-- 프로젝트 정보 -->
+	<select id="getProject" resultType="ProjectVO">
+		select
+		pj_name,pj_active,pj_writer,pj_description,pj_startdate,pj_enddate,pj_regdate,pj_num
+		from user_project where pj_num = #{pjNum}
+	</select>
+
+	<!-- 채팅세팅 -->
+	<insert id="setChat" parameterType="ChatVO">
+		insert into user_chat
+		(pj_num, chat_writer, chat_content, chat_regdate)
+		values
+		(#{pjNum},#{chatWriter},#{chatContent},now());
+	</insert>
+
+	<!-- 채팅 받아오기 -->
+	<select id="getChat" resultType="ChatVO">
+		select chat_num,chat_writer,
+		chat_content,
+		chat_regdate,u.user_name,u.user_img
+		from user_chat c
+		left outer join
+		user_user u on c.chat_writer = u.user_id
+		where pj_num
+		=#{pjNum};
+	</select>
+
+	<!-- 채팅 삭제 -->
+	<delete id="deleteChat" parameterType="int">
+		delete from user_chat
+		where chat_num=#{chatNum};
+	</delete>
+
+	<!-- 채팅 수정 -->
+	<update id="modifyChat" parameterType="map">
+		update user_chat set chat_content = #{modify_content} where
+		chat_num=#{chat_num}; <!-- ajax로 화면에서 스네이크표기법으로 값을 넘겨줌. -->
+	</update>
+
+	<!-- 프로젝트 리스트 -->
+	<select id="getProjectList" resultType="ProjectVO">
+		select
+		m.pj_num,user_id,is_observer,pj_name,pj_active,pj_writer,pj_bookmark,pj_description,
+		pj_startdate,pj_enddate,pj_regdate,(select count(*) from mapping
+		where
+		pj_num = m.pj_num and is_observer=0) as pj_memberCount,
+		(select
+		count(*) from mapping
+		where pj_num = m.pj_num and is_observer=1) as
+		pj_observerCount
+		from mapping as m
+		inner join user_project as p on
+		m.pj_num = p.pj_num
+		where user_id=#{user_id} order by pj_enddate
+	</select>
+
+	<!-- 즐겨찾기 클릭하면 값 수정 -->
+	<update id="changeBookmark" parameterType="map">
+		update mapping set pj_bookmark =
+		<choose>
+			<when test="pj_bookmark==true">0</when>
+			<otherwise>1</otherwise>
+		</choose>
+		where user_id = #{user_id} and pj_num = #{pj_num};
+	</update>
+
+	<!-- 유저 이름 가져오기 -->
+	<select id="getUserName" resultType="string">
+		select user_name from
+		user_user where user_id = #{user_id}
+	</select>
+
+	<!-- 프로젝트 삭제 -->
+	<delete id="deleteProject" parameterType="int">
+		delete from
+		user_project where pj_num=#{pj_num}
+	</delete>
+	
+	<!-- 해당 pj에 본인이 멤버인지 체크 -->
+	<select id="checkMember" resultType="string">
+		select user_id from mapping where user_id=#{user_id} and pj_num=#{pj_num};
+	</select>
+
+	<!-- 프로젝트 상세내용 가져오기 -->
+	<select id="getProjectDetail" resultType="ProjectVO">
+		select pj_num, pj_name, pj_description, pj_startdate, pj_enddate
+		from user_project
+		where pj_num = #{pjNum}
+	</select>
+
+	<!-- 프로젝트의 멤버 가져오기 -->
+	<select id="getProjectDetailMember" resultType="ProjectVO">
+		select m.user_id, m.is_observer, u.user_name
+		from mapping m
+		left join user_user u on m.user_id = u.user_id
+		where pj_num = #{pjNum}
+	</select>
+
+	<!-- 멘토님의 조언대로 모든 작업을 실시간으로 처리할 수 있게 쪼갰습니다. -->
+	<!-- 프로젝트 수정 - 프로젝트 명 수정 -->
+	<update id="changeProjectName" parameterType="ProjectVO">
+		update user_project
+		set pj_name = #{pjName}
+		where pj_num = #{pjNum}
+	</update>
+	
+	<!-- 프로젝트 수정 - 프로젝트 시작일 수정 -->
+	<update id="changeProjectStartdate" parameterType="ProjectVO">
+		update user_project
+		set pj_startdate = #{pjStartdate}
+		where pj_num = #{pjNum}
+	</update>
+	
+	<!-- 프로젝트 수정 - 프로젝트 종료일 수정 -->
+	<update id="changeProjectEnddate" parameterType="ProjectVO">
+		update user_project
+		set pj_enddate = #{pjEnddate}
+		where pj_num = #{pjNum}
+	</update>
+	
+	<!-- 프로젝트 수정 - 프로젝트 설명 수정 -->
+	<update id="changeProjectDescription" parameterType="ProjectVO">
+		update user_project
+		set pj_description = #{pjDescription}
+		where pj_num = #{pjNum}
+	</update>
+	
+	<!-- 프로젝트 수정 - 멤버 권한 변경 (팀원, 옵저버) -->
+	<update id="changeMemberAuthority" parameterType="ProjectVO">
+		update mapping
+		set is_observer =
+		<choose>
+			<when test="isObserver==false">0</when>
+			<otherwise>1</otherwise>
+		</choose>
+		where pj_num = #{pjNum} and user_id = #{userId}
+	</update>
+
+	<!-- 프로젝트 수정 - 멤버 추가하기 -->
+	<insert id="addProjectMember" parameterType="ProjectVO">
+		insert into mapping(pj_num, 
+							user_id, 
+							is_observer)
+					values(#{pjNum}, 
+						   #{userId}, 
+						   0)
+	</insert>
+
+	<!-- 프로젝트 수정 - 멤버 삭제하기 -->
+	<delete id ="deleteProjectMember" parameterType="ProjectVO">
+		delete
+		from mapping
+		where user_id = #{userId} and pj_num = #{pjNum}
+	</delete>
+
+	<!-- 캘린더 구현시  -->
+	<select id="getBoardList" resultType="UserBoardVO">
+		select board_num,board_title,board_writer,board_regdate,board_process,board_startdate,CONCAT(DATE_ADD(STR_TO_DATE(board_enddate, '%Y-%m-%d'), INTERVAL 1 DAY), '') AS board_enddate,board_content,board_category
+			from user_board where pj_num=#{pj_num} and board_writer=#{user_id} order by board_startdate;
+	</select>
+
+	<insert id="addSchedule" parameterType="UserScheduleVO">
+		insert into user_schedule
+		(todo_writer,user_todo,user_tododate,user_todotime) values
+		(#{todoWriter},#{userTodo},#{userTododate},#{userTodotime})
+	</insert>
+
+	<select id="getTodoList" resultType="UserScheduleVO">
+		select todo_num,user_todo,user_tododate,user_todotime,todo_writer from user_schedule where todo_writer=#{todo_writer}
+	</select>
+
+	<delete id="deleteTodo" parameterType="int">
+		delete from user_schedule where todo_num = #{todoNum}
+	</delete>
+
+</mapper>

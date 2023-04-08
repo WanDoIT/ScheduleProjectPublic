@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.choongang.scheduleproject.board.service.UserBoardMapper">
+
+	<!-- 해당 프로젝트 게시판 리스트 출력 + 검색 : 이 때, rownum 처리해서 게시글 1부터 나오게끔 출력 -->
+	<select id="getList" resultType="UserBoardVO">
+		select
+		T.board_num, T.board_category,
+		T.board_title, T.board_writer,
+		T.board_regdate, T.board_startdate,
+		T.board_enddate, T.board_process,
+		T.user_name, T.row_num
+		from (
+		select
+		(@row_num:=@row_num+1) AS row_num,
+		b.board_category, b.board_title,
+		b.board_writer, b.board_regdate,
+		b.board_startdate, b.board_enddate,
+		b.board_process, b.board_num, u.user_name
+		from user_board b
+		left join user_user u
+		on b.board_writer = u.user_id,
+		(select @row_num:=0) AS tmp
+		where b.pj_num = #{pjNum}
+		<choose>
+			<when test='cri.searchType == "boardCategory" and cri.search != null'>
+				and board_category like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardTitle" and cri.search != null'>
+				and board_title like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardWriter" and cri.search != null'>
+				and user_name like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardRegdate" and cri.search != null'>
+				and board_regdate like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardStartdate" and cri.search != null'>
+				and board_startdate like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardEnddate" and cri.search != null'>
+				and board_enddate like concat('%', #{cri.search}, '%')
+			</when>
+		</choose>
+		order by row_num desc
+		limit #{cri.pageStart}, #{cri.amount}
+		) T;
+	</select>
+
+	<!-- 검색 결과의 갯수 -->
+	<select id="getCount" resultType="int">
+		select count(*) as total from user_board
+		where pj_num = #{pjNum}
+		<choose>
+			<when test='cri.searchType == "boardCategory" and cri.search != null'>
+				and board_category like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardTitle" and cri.search != null'>
+				and board_title like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardWriter" and cri.search != null'>
+				and board_writer like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardRegdate" and cri.search != null'>
+				and board_regdate like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardStartdate" and cri.search != null'>
+				and board_startdate like concat('%', #{cri.search}, '%')
+			</when>
+			<when test='cri.searchType == "boardEnddate" and cri.search != null'>
+				and board_enddate like concat('%', #{cri.search}, '%')
+			</when>
+		</choose>
+	</select>
+
+	<!-- 글 등록 -->
+	<insert id="getContent" parameterType="UserBoardVO">
+		insert into user_board (
+		pj_num, board_title, board_writer, board_process,
+		board_startdate, board_enddate, board_content, board_category)
+		values( #{pjNum}, #{boardTitle}, #{boardWriter}, #{boardProcess},
+		#{boardStartdate}, #{boardEnddate}, #{boardContent}, #{boardCategory})
+		<selectKey keyProperty="boardNum" resultType="int" order="AFTER">
+			select last_insert_id()
+		</selectKey>
+	</insert>
+
+	<!-- 파일 등록, 수정에서도 같이 사용 -->
+	<insert id="fileUploadList" parameterType="fileVO">
+		insert into user_boardfile (
+		board_num, boardfile_path, boardfile_name)
+		values (#{boardNum}, #{boardfilePath}, #{boardfileName})
+	</insert>
+
+	<!-- boardList에서 observer 값 받아오기 -->
+	<select id="getObserver" resultType="String">
+		select user_id from mapping
+		where pj_num = #{pjNum} and is_observer = 1;
+	</select>
+
+	<!-- 글 상세 조회 -->
+	<select id="detailContent" resultType="UserBoardVO">
+		select b.board_num, b.board_title, b.board_process, b.board_writer,
+		b.board_startdate, b.board_enddate, b.board_content, b.board_category,
+		u.user_name
+		from user_board b
+		left join user_user u on b.board_writer = u.user_id
+		where pj_num = ${pjNum} and board_num = ${boardNum};
+	</select>
+
+	<!-- 상세 화면에서 fileList 가져오기 -->
+	<select id="fileList" resultType="FileVO">
+		select boardfile_num, board_num, boardfile_path, boardfile_name,
+		board_dcheck
+		from user_boardfile
+		where board_num = ${boardNum} and board_dcheck = 0
+	</select>
+
+	<!-- 글 삭제 -->
+	<delete id="deleteContent" parameterType="int">
+		delete from user_board where board_num = #{boardNum}
+	</delete>
+
+	<!-- 게시글 업데이트 -->
+	<update id="updateContent" parameterType="map">
+		update user_board
+		set board_title = #{vo.boardTitle},
+		board_category = #{vo.boardCategory},
+		board_process = #{vo.boardProcess},
+		board_startdate = #{vo.boardStartdate},
+		board_enddate = #{vo.boardEnddate},
+		board_content = #{vo.boardContent}
+		where board_num = #{vo.boardNum}
+	</update>
+
+	<!-- 파일 업데이트(dcheck=1로 변경) -->
+	<update id="updateFileList" parameterType="FileVO">
+		update user_boardfile
+		set board_dcheck = 1
+		where board_num = #{boardNum}
+	</update>
+
+	<!-- 댓글과 대댓글을 가져오는 쿼리문 -->
+	<select id="getComments" resultType="CommentVO">
+		select comment_num,
+			 	comment_writer,
+			 	comment_regdate,
+			 	comment_content,
+			 	c.board_num,
+			 	u.user_name,
+			 	u.user_img
+		from user_comment c
+		left join user_board b
+		on c.board_num =  b.board_num
+		left join user_user u
+		on c.comment_writer = u.user_id
+		where b.pj_num = #{pjNum} and c.board_num=#{boardNum} and c.comment_upper_num = 0
+	</select>
+
+	<select id="getSubComments" resultType="CommentVO">
+		select comment_num,
+				comment_writer,
+				comment_regdate,
+				comment_content,
+				u.user_name,
+				u.user_img
+		from user_comment c
+		left join user_user u
+		on c.comment_writer = u.user_id
+		where comment_upper_num = #{commentNum}
+	</select>
+
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="int">
+		delete from user_comment where comment_num = #{commentNum}
+	</delete>
+
+	<!-- 댓글 등록 -->
+	<insert id="registComment" parameterType="RegistCommentVO">
+		insert into user_comment
+		(board_num, comment_writer, comment_content, comment_upper_num)
+		values
+		(#{boardNum},#{commentWriter},#{commentContent},#{commentUpperNum})
+	</insert>
+
+</mapper>

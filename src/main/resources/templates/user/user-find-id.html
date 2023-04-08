@@ -1,0 +1,107 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+<title>중앙 소프트 일정관리 시스템</title>
+<meta content="" name="description">
+<meta content="" name="keywords">
+
+<!-- Favicons -->
+<link href="/assets/img/logo3.png" rel="icon">
+<link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+<!-- Google Fonts -->
+<link href="https://fonts.gstatic.com" rel="preconnect">
+<link
+	href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+	rel="stylesheet">
+
+<!-- Vendor CSS Files -->
+<link href="/assets/vendor/bootstrap/css/bootstrap.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css"
+	rel="stylesheet">
+<link href="/assets/vendor/boxicons/css/boxicons.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/quill/quill.snow.css" rel="stylesheet">
+<link href="/assets/vendor/quill/quill.bubble.css" rel="stylesheet">
+<link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+<link href="/assets/vendor/simple-datatables/style.css" rel="stylesheet">
+
+<!-- Template Main CSS File -->
+<link href="/assets/css/style.css" rel="stylesheet">
+<script src="/assets/js/jquery-1.12.1.min.js"></script>
+<script src="/assets/js/jquery-ui.min.js"></script>
+
+
+<!-- =======================================================
+  * Template Name: NiceAdmin - v2.5.0
+  * Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+
+
+</head>
+<div class="wrap">
+	<main id="main" class="main" style="margin: 0 auto">
+		<div class="pagetitle" style="text-align: center; padding-top: 100px">
+			<h1>Project Management 아이디 찾기</h1>
+		</div>
+		<!-- End Page Title -->
+		<section class="section">
+			<div class="row">
+				<div class="col-lg-4" style="margin: 0 auto">
+					<div class="card">
+						<div class="card-body">
+							<div class="pt-4 pb-2"></div>
+							<form class="row g-3" id="findIdForm" action="/user/find-id" method="post">
+								<div class="col-12">
+									<div>
+										<label for="yourName" class="form-label">이름</label>
+										<span id="nameWarning" style="color: red; font-size: 5px; float: right"></span>
+									</div>
+									<input type="text" name="userName" class="form-control" id="user_name" required>
+								</div>
+								<div class="col-12">
+									<div>
+										<label for="yourEmail" class="form-label">이메일</label> 
+										<span id="emailWarning" style="color: red; font-size: 5px; float: right"></span>
+									</div>
+									<div>
+										<input type="text" name="userEmail" class="form-control" id="user_email" style="float: left; width: 70%" required>
+										<button type="button" class="btn btn-primary" id="sendMailBtn" style="float: right; width: 25%" onclick="sendMail()">메일발송</button>
+									</div>
+								</div>
+								<div class="col-12">
+									<div>
+										<label for="yourEmail" class="form-label">이메일 인증 코드</label> 
+										<span id="emailVerifyWarning" style="color: red; font-size: 5px; float: right"></span>
+									</div>
+									<div>
+										<input type="text" name="user_email_verify" class="form-control" id="user_email_verify" style="float: left; width: 70%" required>
+										<button type="button" id="user_email_verify_btn" class="btn btn-primary" style="float: right; width: 25%" onclick="verifyMail()">인증하기</button>
+										<span id="email_verify_succeed" style="display: none">0</span>
+									</div>
+								</div>
+								<button class="btn btn-primary" type="button" onclick="findId()">아이디 찾기</button>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+	<!-- End #main -->
+</div>
+<script src="/assets/js/user-find-id.js"></script>
+<!-- 유효성 검사 코드 -->
+<script th:inline="javascript">
+	var msg = JSON.parse('[[${msg}]]');
+	if(msg != null) {
+		alert(msg);
+	}
+</script>
+
+</html>

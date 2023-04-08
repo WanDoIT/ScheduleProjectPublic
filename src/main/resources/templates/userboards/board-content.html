@@ -1,0 +1,328 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+    <div class="wrap">
+        <main id="main" class="main" style="background-color: #f6f9ff;">
+            <section class="section">
+                <div class="row">
+                    <div class="col-lg-8" style="margin: 0 auto;">
+                        <!-- 내용 박스 -->
+                        <div class="card">
+                            <div class="card-body" style="padding: 20px 50px 50px 50px;">
+                                <h5 class="card-title">글 상세 보기</h5>
+                                <form action="/userboards/delete-content" method="post">
+                                    <input type="hidden" id="pjNum" th:name="pjNum" th:value="${pjNum}">
+                                    <input type="hidden" id="boardNum" th:name="boardNum" th:value="${boardNum}">
+                                    <input type="hidden" name="sessionId" th:id="${session.user_id}"></input>
+
+                                    <div style="border: 1px solid #ccc; padding: 30px; border-radius: 10px;">
+                                        <div class="row mb-3">
+                                            <label for="category" class="col-sm-2 col-form-label">카테고리</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px; border: none;">
+                                                [[${userBoardVO.boardCategory}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="process" class="col-sm-2 col-form-label">진행 과정</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px">
+                                                [[${userBoardVO.boardProcess}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="title" class="col-sm-2 col-form-label">제목</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px;">
+                                                [[${userBoardVO.boardTitle}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="writer" class="col-sm-2 col-form-label">작성자</label>
+                                            <div id="boardWriter" th:name="boardWriter" th:value="${userBoardVO.boardWriter}" class="col-sm-10" style="padding: 4.75px 15px;">
+                                                [[${userBoardVO.userName}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="startDate" class="col-sm-2 col-form-label">시작일</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px">
+                                                [[${userBoardVO.boardStartdate}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="endDate" class="col-sm-2 col-form-label">완료일</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px">
+                                                [[${userBoardVO.boardEnddate}]]</div>
+                                        </div>
+
+                                        <div class="row mb-3" style="padding-bottom:10px">
+                                            <label for="upload" class="col-sm-2 col-form-label">업로드 된 파일</label>
+                                            <div class="col-sm-10" style="padding: 4.75px 15px">
+                                                <li th:each="file : ${fileList}" class="fileList">
+                                                    <button th:src="${file.boardfilePath}" class="downloadBtn" style="border: none; background-color:white;" type="button" onclick="downloadBoardImg(event)" title="Download Board image">
+                                                        [[${file.boardfileName}]]</button>
+                                                </li>
+                                                <li id="noFiles" style="display:none;">첨부된 파일이 없습니다.</li>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <label for="description" class="col-sm-2 col-form-label">세부 내용</label>
+                                            <div class="col-sm-10">
+                                                <div>
+                                                    <div id="summernote" style="overflow: auto; height: 300px; border: 1px solid #ccc; padding: 5px; border-radius: 10px;">
+                                                        <div style="padding: 10px" th:utext="${userBoardVO.boardContent}"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- 여기까지가 게시글 상세보기 마지막 -->
+
+                                        <!-- 여기서부터 댓글 -->
+                                        <div class="pagetitle">
+                                            <h5 style="font-weight: 700;">댓글</h5>
+
+                                            <th:block th:each="commentVO:${comments}">
+                                                <div class="reply-wrap" style="border: 1px solid #ccc; border-radius: 10px; margin-top: 10px; margin-bottom: 10px;">
+                                                    <div style="padding: 10px;">
+                                                        <div style="width: 70px; height: 70px; margin: 5px; float: left;">
+                                                            <img th:src="${commentVO.userImg}" style="width: 100%; height: 100%;" class="rounded-circle">
+                                                        </div>
+
+                                                        <div style="padding: 10px; overflow: hidden; position: relative;">
+                                                            <p style="font-weight: 800;">[[${commentVO.userName}]]</p>
+                                                            <p style="position: absolute; top: 10px; right: 10px; font-size: 10px; color: gray;" th:text="${#dates.format(commentVO.commentRegdate, 'yyyy-MM-dd HH:mm:ss')}"></p>
+		                                                    <p th:each="line : ${#strings.arraySplit(commentVO.commentContent, '&lt;br&gt;')}" th:text="${line}" style="margin:0;"></p>
+	                                                    </div>
+	                                                </div>
+
+	                                                <div align="right" style="width: 100%; height: 40px;">
+	                                                	<input type="hidden" th:value="${commentVO.commentNum}" id="commentNum">
+	                                                    <button th:if="${commentVO.commentWriter == session.user_id}" type="button" class="btn btn-danger btn-sm" style="margin-right: 5px;">삭제</button>
+	                                                    <button type="button" class="btn btn-primary btn-sm" style="margin-right:10px;">답글</button>
+	                                                </div>
+
+	                                                <!-- 대댓글을 반복시킴 -->
+	                                                <th:block th:each="sub_commentVO : ${commentVO.getCommentList}" style="display: flex;">
+														<!-- 대댓글 -->
+		                                                <div style="margin-left: 5%; margin-bottom:10px; display:flex; position: relative;">
+															<div style="width: 40px; height: 40px; border-bottom: 3px solid #ced4da; border-left: 3px solid #ced4da;"></div>
+
+		                                                    <div style="width: 70px; height: 70px; margin: 5px; float: left;">
+		                                                        <img th:src="${sub_commentVO.userImg}" style="width: 70px; height: 70px;" class="rounded-circle">
+		                                                    </div>
+
+		                                                    <div style="padding: 10px; overflow: hidden; width: 390px;">
+		                                                        <p style="font-weight: 800;">[[${sub_commentVO.userName}]]</p>
+		                                                        <p style="position: absolute; top: 10px; right: 10px; font-size: 10px; color: gray;" th:text="${#dates.format(sub_commentVO.commentRegdate, 'yyyy-MM-dd HH:mm:ss')}"></p>
+		                                                        <p th:each="line : ${#strings.arraySplit(sub_commentVO.commentContent, '&lt;br&gt;')}" th:text="${line}" style="margin:0;"></p>
+	                                                    	</div>
+		                                                </div>
+														<div align="right" style="width: 100%; height: 40px; display:block;">
+															<input type="hidden" th:value="${sub_commentVO.commentNum}" id="commentNum">
+		                                                    <button th:if="${sub_commentVO.commentWriter == session.user_id}" type="button" class="btn btn-danger btn-sm" style="margin-right: 5px;">삭제</button>
+		                                                </div>
+		                                            </th:block>
+
+													<!-- 대댓글 등록 -->
+													<div style="display:none; " class="reply">
+															<div class="list-group-item-secondary" style="border-bottom-left-radius:10px; border-bottom-right-radius: 10px;">
+				                                                <div style="padding-top: 10px; margin-left:11%;" class="hidden">
+				                                                    <h5 style="font-weight: 700;">작성자 : [[${session.user_name}]]</h5>
+				                                                </div>
+
+			                                                    <div style="padding: 20px 10px">
+			                                                        <div class="form-floating" style="margin-left:10%;">
+					                                                    <input type="hidden" th:value="${session.user_id}" name="commentWriter">
+	                                                    				<input type="hidden" th:value="${commentVO.commentNum}" name="commentUpperNum">
+			                                                            <textarea class="form-control" name="commentContent" placeholder="입력" id="floatingTextarea" style="height: 100px; " ></textarea>
+			                                                            <label for="floatingTextarea">댓글을 입력해주세요.</label>
+			                                                        </div>
+			                                                    </div>
+
+			                                                    <div style="padding-bottom: 30px; position: relative;">
+			                                                        <button type="button" class="btn btn-success btn-sm" style="float: right; position: absolute; top: -10px; right: 10px;">등록</button>
+			                                                    </div>
+			                                                </div>
+
+													</div>
+	                                            </div>
+											</th:block>
+
+                                            <!-- 댓글 등록 -->
+                                                <div style="padding-top: 10px;" class="hidden">
+                                                    <h5 style="font-weight: 700;">작성자 : [[${session.user_name}]]</h5>
+                                                </div>
+                                                <div class="list-group-item-secondary">
+                                                    <div style="padding: 20px 10px">
+                                                        <div class="form-floating">
+		                                                    <input type="hidden" th:value="${session.user_id}" name="commentWriter">
+		                                                    <input type="hidden" value=0 name="commentUpperNum">
+                                                            <textarea class="form-control" name="commentContent" placeholder="입력" id="floatingTextarea" style="height: 100px;" ></textarea>
+                                                            <label for="floatingTextarea">댓글을 입력해주세요.</label>
+                                                        </div>
+                                                    </div>
+                                                    <div style="padding-bottom: 30px; position: relative;">
+                                                        <button type="button" class="btn btn-success btn-sm" style="float: right; position: absolute; top: -10px; right: 10px;">등록</button>
+                                                    </div>
+                                                </div>
+                                        </div>
+                                        <!-- 여기까지가 댓글 -->
+
+                                        <div style="text-align: center; padding-top: 30px;">
+                                            <button id="modiBtn" name="modiBtn" type="button" class="btn btn-primary btn-sm">수정</button>
+                                            <button id="delBtn" name="delBtn" type="submit" class="btn btn-primary btn-sm">삭제</button>
+                                            <button id="listBtn" type="button" class="btn btn-primary btn-sm">목록</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</th:block>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+
+<script>
+
+    //업로드 파일 목록에서 마우스 가져다 대면 hover 속성 추가
+    $(".downloadBtn").css("color", "black").hover(function() {
+        $(this).css("color", "#337AB7");
+    }, function() {
+        $(this).css("color", "black");
+    });
+
+    //이미지 다운로드
+    function downloadBoardImg(event) {
+        let myImg = event.target.getAttribute("src");
+        location.href = "../aws/profile-download?myProfileImg=" + myImg;
+    }
+
+    $(document).ready(function() {
+        //fileList가 없을 때 #noFiles를 표시
+        if ($('li.fileList').length === 0) {
+            console.log($('li.fileList').length);
+            $('#noFiles').show();
+        }
+
+        //sessionId와 작성자 id가 다르면 삭제와 수정 버튼 막기
+        let boardWriter = $('#boardWriter').attr('value');
+        console.log(boardWriter);
+        let sessionId = $("input[name='sessionId']").attr("id");
+        if (boardWriter !== sessionId) {
+            // session.id와 같을 경우 삭제, 수정 버튼을 보이게 처리
+            $("button[name='modiBtn']").prop("disabled", true)
+            $("button[name='delBtn']").prop("disabled", true)
+        }
+    });
+
+	//답글 토글
+    $(".btn-primary").on('click',function(e){
+    	$(e.target).closest('div').closest('.reply-wrap').find('.reply').toggle('fast');
+    });
+
+	//댓글 삭제
+	$(".btn-danger").on('click',function(e){
+		let data = $(e.target).closest('div').find('input').val() //삭제할 commentNum 가져옴
+		$.ajax({
+			url:"../delete-comment",
+			type:"POST",
+			data:{
+				comment_num:data
+			},
+			success:function(result){
+				alert(result);
+				location.href="/userboards/board-content?pj_num=[[${pjVO.pjNum}]]&board_num=[[${boardNum}]]";
+			},
+			error:function(){
+				alert("오류 발생");
+			}
+		});
+	})
+
+	//댓글 등록
+	$('.btn-success').click(function(e){
+
+		let regist_data = {
+				pj_num:'[[${pjVO.pjNum}]]',
+				board_num:'[[${boardNum}]]',
+				comment_writer:$(e.target).closest('div').closest('.list-group-item-secondary').find("input[name='commentWriter']").val(),
+				comment_content:$(e.target).closest('div').closest('.list-group-item-secondary').find('#floatingTextarea').val(),
+				comment_upper_num:$(e.target).closest('div').closest('.list-group-item-secondary').find("input[name='commentUpperNum']").val()
+			} //댓글 데이터
+
+		if(regist_data.comment_content.trim()===''){
+			e.preventDefault(); //공백 입력 막음
+			return;
+		};
+		$.ajax({ //댓글을 포스트로 넘겨줌
+			url:'../regist-comment',
+			type:'post',
+			data:JSON.stringify(regist_data),
+			contentType:'application/json',
+			success:function(result){
+				alert(result);
+				location.href="/userboards/board-content?pj_num=[[${pjVO.pjNum}]]&board_num=[[${boardNum}]]"
+			},
+			error:function(){
+				alert("250자 초과 또는 등록 중 오류가 생겼습니다.");
+			}
+		})
+	})
+
+	//엔터키 눌렀을 때
+	$('.form-control').on('keydown',function(e){
+		if (e.keyCode === 13){
+			if (!e.shiftKey) {
+				let regist_data = {
+						pj_num:'[[${pjVO.pjNum}]]',
+						board_num:'[[${boardNum}]]',
+						comment_writer:$(e.target).closest('div').closest('.list-group-item-secondary').find("input[name='commentWriter']").val(),
+						comment_content:$(e.target).closest('div').closest('.list-group-item-secondary').find('#floatingTextarea').val().replaceAll(/(\n|\r\n)/g, "<br>"),
+						comment_upper_num:$(e.target).closest('div').closest('.list-group-item-secondary').find("input[name='commentUpperNum']").val()
+					} //댓글 데이터
+				if(regist_data.comment_content.trim()===''){
+					e.preventDefault(); //공백 입력 막음
+					return;
+				};
+				$.ajax({ //댓글을 포스트로 넘겨줌
+					url:'../regist-comment',
+					type:'post',
+					data:JSON.stringify(regist_data),
+					contentType:'application/json',
+					success:function(result){
+						alert(result);
+						location.href="/userboards/board-content?pj_num=[[${pjVO.pjNum}]]&board_num=[[${boardNum}]]"
+					},
+					error:function(){
+						alert("250자 초과 또는 등록 중 오류가 생겼습니다.");
+					}
+				})
+			}
+		}
+	});
+
+    //수정, 삭제-목록으로 감, 목록으로 가기
+    let urlParams = new URLSearchParams(window.location.search);
+    $('#modiBtn').click(function() {
+        window.location.href = "/userboards/board-modify?pj_num=" + urlParams.get('pj_num') + "&board_num=" + urlParams.get('board_num');
+    });
+
+    $('#delBtn').click(function() {
+        if (confirm("정말 지우겠습니까?")) {
+            document.actionForm.submit();
+        }
+    });
+
+    $('#listBtn').click(function() {
+        window.location.href = "/userboards/board-list?pj_num=" + urlParams.get('pj_num');
+    });
+
+</script>
+
+</html>

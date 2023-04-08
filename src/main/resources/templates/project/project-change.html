@@ -1,0 +1,156 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+<title>중앙 소프트 일정관리 시스템</title>
+<meta content="" name="description">
+<meta content="" name="keywords">
+
+<!-- Favicons -->
+<link href="/assets/img/logo.png" rel="icon">
+<link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+<!-- Google Fonts -->
+<link href="https://fonts.gstatic.com" rel="preconnect">
+<link
+	href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
+	rel="stylesheet">
+
+<!-- Vendor CSS Files -->
+<link href="/assets/vendor/bootstrap/css/bootstrap.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css"
+	rel="stylesheet">
+<link href="/assets/vendor/boxicons/css/boxicons.min.css"
+	rel="stylesheet">
+<link href="/assets/vendor/quill/quill.snow.css" rel="stylesheet">
+<link href="/assets/vendor/quill/quill.bubble.css" rel="stylesheet">
+<link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+<link href="/assets/vendor/simple-datatables/style.css" rel="stylesheet">
+
+<!-- Template Main CSS File -->
+<link href="/assets/css/style.css" rel="stylesheet">
+<script src="/assets/js/jquery-1.12.1.min.js"></script>
+<script src="/assets/js/jquery-ui.min.js"></script>
+
+
+<!-- =======================================================
+  * Template Name: NiceAdmin - v2.5.0
+  * Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
+  * Author: BootstrapMade.com
+  * License: https://bootstrapmade.com/license/
+  ======================================================== -->
+
+<link rel="stylesheet" type="text/css" href="/assets/css/modal.css"/>
+<script src="/assets/js/modal.js"></script>
+<script src="/assets/js/project-change.js"></script>
+
+</head>
+<div class="wrap">
+	<main id="main" class="main" style="margin: 0 auto">
+	
+	<div class="pagetitle" style="text-align: center; padding-top:10px">
+		<h1>프로젝트 수정</h1>
+	</div>
+	
+		<input style="display:none" name="pjNum" id="pjNum" th:value="${project.pjNum}">
+		<section class="section">
+		<div class="row" style="justify-content: center">
+			<div class="col-lg-7">
+				<div class="card">
+					<div class="card-body">
+						<h5 style="text-align: center; font-size: 18px; font-weight: 500; padding-top: 20px">프로젝트 수정은 실시간으로 반영됩니다.</h5>
+						<hr>
+						<div>
+							<span>프로젝트 명</span>
+							<span id="nameWarning" style="color: red; font-size: 14px; float: right;"></span>
+							<input class="form-control" type="text" name="pjName" id="pjName" placeholder="프로젝트 제목을 입력하세요." th:value="${project.pjName}" onblur="changeProjectName()" required><br>
+							<div style="padding-bottom: 50px">
+								<div style="float: left; width: 50%">
+									<span>프로젝트 시작일</span>
+									<input type="date" class="form-control" th:value="${project.pjStartdate}" onchange="changeProjectStartdate()" name="pjStartdate" id="pjStartdate" onkeydown="return false">
+								</div>
+								<div style="float: right; width: 50%">
+									<span>프로젝트 종료일</span>
+									<span id="dateWarning" style="color: red; font-size: 14px; float: right;"></span>
+									<input type="date" class="form-control" th:value="${project.pjEnddate}" onchange="changeProjectEnddate()" name="pjEnddate" id="pjEnddate" onkeydown="return false">
+								</div>
+							</div>
+							<div style="padding-top: 40px">
+								<span>프로젝트 상세 설명</span>
+								<span id="contentWarning" style="color: red; font-size: 14px; float: right;"></span>
+								<textarea class="form-control" type="text" name="pjDescription" id="pjDescription" placeholder="프로젝트에 관한 설명을 입력하세요." onblur="changeProjectDescription()" style="height: 200px; resize: none;">[[${project.pjDescription}]]</textarea>
+								
+								<div style="padding-top: 30px;">
+									<span>팀장</span>
+									<div style="border: 1px solid #ced4da;" class="form-control">
+										<span name="pjWriter" value="0" th:id="${session.user_id}" style="font-weight: 800;">[[${session.user_name}]]</span>
+									</div>
+								</div>
+								
+								<div style="padding-top: 30px">
+									<button class="modalOn btn btn-primary w-20">팀원 및 옵저버 수정</button>
+									<span id="memberWarning" style="color: red; font-size: 14px; float: right; margin-top: 10px;"></span>
+									<button class="btn btn-primary w-20" type="button" style="float:right" onclick="changeProject()">홈으로</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		</section>
+
+	<!-- 모달창 -->
+	<div id="basicModal" class="modal-overlay">
+		<div class="modal-content">
+			<p class="title" style="padding-top: 20px"></p>
+			<div class="content">
+				<div class="sub-form">
+					<div>
+						<div style="float: left; width: 49%;">
+							<p>전체 목록</p>
+							<div class="form-control" type="text" style="height: 400px; overflow: auto;" required>
+								<div style="display: flex;">
+									<div class="depListWrap" style="padding-right: 20px; border-right: 1px solid #ced4da;">
+									</div>
+									<div class="depMemberListWrap">
+									</div>
+								</div>
+							</div>
+							<div style="padding-top: 10px">
+								<button type="button" class="btn btn-primary w-20" onclick="teamPlus(event)">추가</button>
+							</div>
+						</div>
+						<div style="float: right; width: 49%" required>
+							<p style="float: left">추가 목록</p>
+							<p style="float: right" class="allMember">일괄 삭제 
+								<input type=checkbox name="memberDelete" style="padding: 10px" onclick="selectAllMember(this)">
+							</p>
+							<div id=teamName class="form-control" type="text" style="height: 400px; overflow: auto;" readonly>
+								<div th:each="members : ${member}" th:unless="${members.userId == session.user_id}" name="member" th:data-name="${members.userName}" th:value="${members.userId}" style="margin: 5px">
+									<input type="checkbox" name="memberDelete" style="margin: 0px 10px 20px 0px">[[${members.userName}]]<select th:if="${members.isObserver == true}" name="memberType" onchange="beObserver(this)" style="margin: 0px 20px 10px 10px; border-radius: 5px">
+										<option value="0">팀원</option>
+										<option value="1" selected>옵저버</option>
+									</select><select th:unless="${members.isObserver == true}" name="memberType" onchange="beObserver(this)" style="margin: 0px 20px 10px 10px; border-radius: 5px">
+										<option value="0" selected>팀원</option>
+										<option value="1">옵저버</option>
+									</select>
+								</div>
+							</div>
+							<div style="padding-top: 10px">
+							</div>
+							<button type="button" onclick="memberDelete2()" class="btn btn-primary w-20" style="float: left;">삭제</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div align="center">
+				<button type="button" class="modalOff btn btn-primary w-20" style="margin-top: 30px">닫기</button>
+			</div>
+		</div>
+	</div>
+	</main>
+</div>
+</html>

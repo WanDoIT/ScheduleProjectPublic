@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+    <mapper namespace="com.choongang.scheduleproject.user.service.UserMapper">
+    
+    <!-- 회원가입 -->
+    <insert id="register" parameterType="UserVO">
+    	insert into USER_USER(user_id,
+    						  department_id,
+    						  user_role,
+    						  user_email,
+    						  user_name,
+    						  user_pw,
+    						  user_cell,
+    						  user_birth,
+    						  user_active,
+    						  user_position,
+    						  user_regdate,
+    						  user_img,
+    						  user_method)
+		    		 values (#{userId},
+		    				 #{departmentId},
+		    				 #{userRole},
+		    				 #{userEmail},
+		    				 #{userName},
+		    				 #{userPw},
+		    				 #{userCell},
+		    				 #{userBirth},
+		    				 #{userActive},
+		    				 #{userPosition},
+		    				 #{userRegdate},
+		    				 #{userImg},
+		    				 #{userMethod})
+    </insert>
+    
+    <!-- 회원가입 시 중복된 아이디가 있는지 확인 -->
+    <select id="checkAllId" resultType="String">
+    	select user_id 
+    	from user_user 
+    	where user_id = #{userId}
+    </select>
+    
+    <!-- 회원가입 시 중복된 이메일이 있는지 확인 -->
+    <select id="checkAllEmail" resultType="String">
+    	select user_email 
+    	from user_user 
+    	where user_email = #{userEmail}
+    </select>
+    
+    <!-- 회원가입 시 모든 부서를 가져와 화면에 뿌려주기 위함 -->
+    <select id="getAllDepartment" resultType="DepartmentVO">
+    	select department_id, department_name 
+    	from user_department
+    </select>
+    
+    <!-- 로그인 시 id 기준으로 데이터를 가져옴. 컨트롤러에서 암호화된 비밀번호 다시 확인함 -->
+    <select id="login" parameterType="UserVO" resultType="UserVO">
+    	select user_id, department_id, user_role, user_email, user_name, user_pw, user_cell, user_birth, user_active, user_position, user_employeenumber, user_regdate, user_img, user_loginfail, user_method
+    	from user_user
+    	where user_id = #{userId} 
+    </select>
+    
+    <!-- 아이디 찾기 시 이름과 이메일을 기준으로 일치하는 데이터를 가져옴 + 카카오로 회원가입했는지도 확인 -->
+    <select id="findId" parameterType="UserVO" resultType="UserVO">
+    	select user_id, user_method
+    	from user_user
+    	where user_name = #{userName} and user_email = #{userEmail}
+    </select>
+    
+    <!-- 비밀번호 초기화 시 id 기준으로 컨트롤러에서 암호화된 비밀번호를 db에 저장 -->
+    <update id="resetPw" parameterType="UserVO">
+    	update user_user
+		set user_pw = #{userPw}
+		where user_id = #{userId}
+    </update>
+    
+    <!-- 카카오 로그인 시 카카오 로그인 때 이용한 이메일로 검색 -->
+    <select id="kakaoLogin" parameterType="UserVO" resultType="UserVO">
+    	select user_id, department_id, user_role, user_email, user_name, user_pw, user_cell, user_birth, user_active, user_position, user_employeenumber, user_regdate, user_img, user_loginfail, user_method
+    	from user_user
+    	where user_email = #{userEmail} 
+    </select>
+    
+    <!-- 로그인 실패 시 실패횟수 기록 -->
+    <update id="failCount" parameterType="UserVO">
+    	update user_user
+		set user_loginfail = #{userLoginfail}
+		where user_id = #{userId}
+    </update>
+    
+    <!-- 로그인 실패 5회 달성 시 계정을 비활성화하는 코드 -->
+    <update id="lockAccount" parameterType="UserVO">
+    	update user_user
+    	set user_active = 0
+    	where user_id = #{userId}
+    </update>
+    
+    <!-- 로그인 성공 시 계정의 로그인 실패횟수를 초기화 -->
+    <update id="failReset" parameterType="UserVO">
+    	update user_user
+		set user_loginfail = 0
+		where user_id = #{userId}
+    </update>
+    
+    <!-- 로그인 성공 시 마지막으로 로그인한 시간을 기록함 -->
+    <insert id="insertLog" parameterType="UserVO">
+    	insert into user_log(user_id,
+    						 log_date)
+	    		    values (#{userId},
+	    		   		    #{userRegdate})
+    </insert>
+    
+    <!-- 비활성화된 계정을 활성화로 바꿔줌. 주로 비밀번호 초기화 때 사용됨 -->
+    <update id="unlockAccount" parameterType="UserVO">
+    	update user_user
+    	set user_active = 1
+    	where user_id = #{userId}
+    </update>
+    
+    <!-- 이메일 인증을 위한 메일 발송 시 이메일, 인증코드, 만료시간을 기록. 처음에 회원가입과 비번 초기화에만 사용하려고 joinReset으로 이름지었지만 아이디 찾기에도 사용되어 joinResetFind로 지었어야 함 -> 수정완료 -->
+    <insert id="sendVerifyCode" parameterType="EmailVO">
+    	insert into email_verify(email,
+    							 code,
+    							 expire_time,
+    							 join_reset_find)
+			    		 values (#{email},
+			    				 #{code},
+			    				 #{expireTime},
+			    				 #{joinResetFind})
+    </insert>
+    
+    <!-- 이메일 인증하기 버튼을 누를 시 db에서 이메일과 인증코드 만료시간을 가져옴 -->
+    <select id="verifyMail" parameterType="EmailVO" resultType="EmailVO">
+    	select email, code, expire_time, join_reset_find
+    	from email_verify
+    	where email = #{email} and join_reset_find = #{joinResetFind}
+    	order by verify_num desc
+    	limit 1;
+    </select>
+    
+    <!-- 비밀번호 초기화 시 유저가 입력한 아이디와 이메일이 일치하는지 검사 -->
+    <select id="checkIdAndEmail" parameterType="UserVO" resultType="UserVO">
+    	select user_id, user_email 
+    	from user_user
+    	where user_id = #{userId} and user_email = #{userEmail}
+    </select>
+    
+    <!-- 아이디 찾기 시 유저가 입력한 이름과 이메일이 일치하는지 검사 -->
+    <select id="checkNameAndEmail" parameterType="UserVO" resultType="UserVO">
+    	select user_name, user_email
+    	from user_user
+    	where user_name = #{userName} and user_email = #{userEmail}
+    </select>
+    
+    <!-- 마이페이지 입장 시 유저의 id 기반으로 유저의 정보를 가져옴 -->
+    <select id="getMyPageInfo" resultType="UserVO">
+    	select user_id, user_role, user_email, user_name, user_cell, user_birth, user_position, user_img, department_name, user_employeenumber, user_method
+    	from user_user u 
+    	left join user_department d on u.department_id = d.department_id
+    	where u.user_id = #{userId}
+    </select>
+    
+    <!-- 마이페이지에서 개인정보를 수정할 수 있는 코드. 생년월일과 휴대폰 번호를 바꿀 수 있다. -->
+    <update id="changeInfo" parameterType="UserVO">
+    	update user_user
+    	set user_birth = #{userBirth}, user_cell = #{userCell}
+    	where user_id = #{userId}
+    </update>
+    
+    <!-- 마이페이지에서 비밀번호를 변경할 수 있는 코드 -->
+    <update id="changePw" parameterType="UserVO">
+    	update user_user
+    	set user_pw = #{userPw}
+    	where user_id = #{userId}
+    </update>
+    
+    <!-- 마이페이지에서 프로필 사진을 없애는 코드 -->
+    <update id="removeImg" parameterType="String">
+    	update user_user
+    	set user_img = 'https://formmesoftimg.s3.ap-northeast-2.amazonaws.com/defaultImg.jpeg'
+    	where user_id = #{userId}
+    </update>
+	
+	<!-- 마이페이지에서 프로필 사진을 업로드하는 코드 -->
+	<update id="insertImg" parameterType="UserVO">
+		update user_user
+		set user_img = #{userImg}
+		where user_id = #{userId}
+	</update>
+	
+	<!-- 마이페이지에서 기존 비밀번호를 확인하는 코드 -->
+	<select id="checkPw" resultType="String">
+		select user_pw
+		from user_user
+		where user_id = #{userId}
+	</select>
+	
+	<!-- 레이아웃에서 팀원의 개인정보를 가져오는 코드 -->
+    <select id="showUserInfo" resultType="UserVO">
+    	select user_email, user_cell, user_birth, user_position, user_img, department_name
+    	from user_user u 
+    	left join user_department d on u.department_id = d.department_id
+    	where u.user_id = #{userId}
+    </select>
+    
+</mapper>

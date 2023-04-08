@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+
+    <div class="wrap">
+        <main id="main" class="main">
+
+            <div class="pagetitle">
+                <h1 class="card-title">
+                    [[${pjVO.pjName}]]
+                </h1>
+                <h6 style="padding-bottom: 20px">
+                    [[${pjVO.pjDescription}]]
+                </h6>
+
+                <nav>
+
+
+                    <!-- Bordered Tabs Justified -->
+                    <ul class="nav nav-tabs nav-tabs-bordered d-flex" id="borderedTabJustified" role="tablist">
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="home-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-home" type="button" role="tab" aria-controls="home" aria-selected="true" th:onclick="|location.href='@{/project/project-started(pj_num=${param.pj_num})}'|">홈</button> <!-- 받아온get값 다른페이지로 넘기기 -->
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="profile-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-profile" type="button" role="tab" aria-controls="profile" aria-selected="false" th:onclick="|location.href='@{/userboards/board-list(pj_num=${param.pj_num})}'|">게시판</button>
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100 active" id="contact-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-contact" type="button" role="tab" aria-controls="contact" aria-selected="false" th:onclick="|location.href='@{/project/project-calendar(pj_num=${param.pj_num})}'|">캘린더</button>
+                        </li>
+                        <li class="nav-item" role="presentation" style="width: 10%">
+                            <button class="nav-link w-100" id="contact-tab" data-bs-toggle="tab" data-bs-target="#bordered-justified-contact" type="button" role="tab" aria-controls="contact" aria-selected="false" th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|">진척률</button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <!-- End Page Title -->
+
+            <div class="card-body" style="background-color: white; padding-top: 20px;position:relative;">
+                <div style="text-align:right; width:90%; margin:10px 0" >
+                    <button type="button" class="btn btn-outline-info" style="font-weight:bold" data-bs-toggle="modal" data-bs-target="#smallModal">
+                        일정 추가
+                    </button>
+                </div>
+                <!-- modal 추가 -->
+                <div class="modal fade" id="smallModal" tabindex="-1">
+
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">일정 추가</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div style="float: left; width: 100%">
+                                    <span>할 일</span>
+                                    <input id="user-todo" class="form-control" type="text" name="user_todo" required><br>
+                                </div>
+
+                                <div style="float: left; width: 100%">
+                                    <span>날짜</span>
+                                    <input id="user-tododate" type="date" class="form-control" name="user_tododate" required>
+                                </div>
+
+                                <div style="float: right; width: 100%; margin-top:20px">
+                                    <span>시간</span>
+                                    <input id="user-todotime" type="time" step="600" class="form-control" name="user_todotime" required>
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                                <button type="button" class="btn btn-primary" onclick="insertTodo()">저장</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id='calendar'></div>
+
+            </div>
+
+
+        </main>
+        <!-- End #main -->
+    </div>
+
+
+
+
+
+
+</th:block>
+
+<script>
+    var userTodo = document.getElementById('user-todo');
+    var userTododate = document.getElementById('user-tododate');
+    var userTodotime = document.getElementById('user-todotime');
+    var today = new Date().toISOString().substring(0, 10); //오늘날짜
+    //url값. 받아서 겟값만 남기도록 처리할 예정
+    var pj_num = getUrlParameter('pj_num');
+
+    var pj_startdate;
+    var pj_enddate;
+    var pj_name;
+    var list = [];
+
+    function insertTodo() {
+		if(userTodo.value == '' || userTododate.value =='' || userTodotime.value =='') {
+			alert("모든 내용을 입력해주세요.");
+		} else {
+        $.ajax({
+            url: "../add-schedule",
+            type: "post",
+            async: false,
+            data: {
+                "user_todo": userTodo.value,
+                "user_tododate": userTododate.value,
+                "user_todotime": userTodotime.value
+
+            },
+            dataType: "json",
+            success: function(e) {
+                document.getElementById('user-todo').value = '';
+                document.getElementById('user-todotime').value = '';
+                alert("등록이 완료되었습니다.")
+                list = [];
+                addTodo();
+                load();
+            }
+        })
+		}
+    }
+
+
+    //url받아서 겟한 값만 남기도록 처리하는 함수
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+
+
+
+    function addTodo() {
+
+        $.ajax({
+            url: "../get-todo-list",
+            async: false,
+            type: "get",
+            success: function(response) {
+
+                for (var i = 0; i < response.length; i++) {
+                    list.push({
+                        'title': response[i].userTodo,
+                        'start': response[i].userTododate + 'T' + response[i].userTodotime,
+                        'id' : response[i].todoNum
+                    })
+                }
+            }
+
+
+        })
+    }
+    addTodo();
+    $(document).ready(load);
+
+    function load() {
+        var colorList = ['rgb(255, 99, 132)',
+            'rgb(75, 192, 192)',
+            'rgb(255, 205, 86)',
+            'rgb(203, 170, 203)',
+            'rgb(54, 162, 235)'
+        ]; //색깔 담음
+        var colorCount = 0; //색 순서를 나타내는 변수.
+        $.ajax({
+            url: "../get-calendar-info",
+            async: false,
+            type: "get",
+            data: {
+                "pj_num": pj_num
+            },
+            dataType: "json",
+            success: function(response) {
+                for (var i = 0; i < response.length; i++) {
+                    if (colorCount == 5) colorCount = 0; //5가지색 모두 사용되면 초기화
+
+                    list.push({
+                        'title': response[i].boardTitle,
+                        'start': response[i].boardStartdate,
+                        'end': response[i].boardEnddate,
+                        'backgroundColor': colorList[colorCount],
+                        'url': '../../userboards/board-content?pj_num=' + pj_num + '&board_num='+ response[i].boardNum,
+                        'borderColor': '#fff'
+                    })
+                    colorCount++;
+                }
+
+
+                var calendarEl = document.getElementById('calendar');
+
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    headerToolbar: {
+                        left: 'prevYear,prev,next,nextYear today',
+                        center: 'title',
+                        right: 'dayGridMonth,dayGridWeek,dayGridDay'
+                    },
+                    initialDate: today,
+                    navLinks: true, // 날짜를 선택하면 day나 week캘리더로 링크
+                    editable: false, // 수정가능?
+                    dayMaxEvents: true, // 이벤트가 오버되면 높이제한
+                    events: list, //이벤트 리스트를 뿌려줌
+                    eventClick : function(calEvent, jsEvent, view){
+                    	if(calEvent.event.id == "") return false
+                    	if(confirm("해당 이벤트를 삭제하시겠습니까?")){
+                    		$.ajax({
+                    			url : "../delete-todo",
+                    			type : "post",
+                    			data : {"todo_num" : calEvent.event.id},
+                    			success : function(response){
+                                    list = [];
+                                    addTodo();
+                                    load();
+                    			}
+                    		})
+
+                    	}
+                    }
+
+
+
+                });
+
+                calendar.render();
+                /*     var addworkBtn = document.querySelector('[title="일정 추가"]');
+                   	addworkBtn.setAttribute("data-bs-toggle","modal");
+                   	addworkBtn.setAttribute("data-bs-target","#smallModal");
+                   	addworkBtn.setAttribute("data-bs-toggle","modal"); */
+                // 달력 윗부분 색깔 바꾸기
+                // assets/dist/index.global.js 파일 7648줄 fc-button-bg-color 속성 변경하면 됨
+
+                // 달력 자체의 글자 색깔 바꾸기
+                // style.css 파일 21줄 참고
+            }
+        })
+
+    }
+</script>
+<style>
+    body {
+        margin: 40px 10px;
+        padding: 0;
+        font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+        font-size: 14px;
+    }
+
+    #calendar {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+</style>
+
+<script src="/assets/js/modal.js"></script>
+<script src="/assets/js/project-add.js"></script>
+<script src='/assets/dist/index.global.js'></script>
+
+</html>

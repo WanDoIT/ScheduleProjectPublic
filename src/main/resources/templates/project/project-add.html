@@ -1,0 +1,125 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<link rel="stylesheet" type="text/css" href="/assets/css/modal.css" />
+<th:block th:replace="~{./include/basic-layout2 :: 함수( ~{:: .wrap } ) }">
+    <div class="wrap">
+        <main id="main" class="main">
+
+            <div class="pagetitle">
+                <h1>프로젝트 생성</h1>
+            </div>
+
+            <form action="/project/project-started" method="post" onsubmit="return false">
+                <section class="section">
+                    <div class="row" style="justify-content: center">
+                        <div class="col-lg-7">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 style="text-align: center; font-size: 18px; font-weight: 500; padding-top: 20px">프로젝트 생성</h5>
+                                    <hr>
+                                    <div>
+                                        <span>프로젝트 명</span>
+                                        <span id="nameWarning" style="color: red; font-size: 14px; float: right;"></span>
+                                        <input class="form-control" type="text" name="pj_name" placeholder="프로젝트 제목을 입력하세요." required><br>
+
+                                        <div style="padding-bottom: 50px">
+                                            <div style="float: left; width: 50%">
+                                                <span>프로젝트 시작일</span>
+                                                <input type="date" class="form-control" name="pj_startdate" onkeydown="return false">
+                                            </div>
+                                            <div style="float: right; width: 50%">
+                                                <span>프로젝트 종료일</span>
+                                                <span id="dateWarning" style="color: red; font-size: 14px; float: right;"></span>
+                                                <input type="date" class="form-control" name="pj_enddate" onkeydown="return false">
+                                            </div>
+                                        </div>
+
+                                        <div style="padding-top: 40px">
+                                            <span>프로젝트 상세 설명</span>
+                                            <span id="contentWarning" style="color: red; font-size: 14px; float: right;"></span>
+                                            <textarea class="form-control" type="text" name="pj_description" placeholder="프로젝트에 관한 설명을 입력하세요." style="height: 200px; resize: none;"></textarea>
+                                            <div style="padding-top: 30px;">
+                                                <span>팀장</span>
+                                                <div style="border: 1px solid #ced4da;" class="form-control">
+                                                    <span name="pj_writer" value="0" th:id="${session.user_id}" style="font-weight: 800;">[[${session.user_name}]]</span>
+                                                </div>
+                                            </div>
+
+                                            <div style="padding-top: 30px">
+                                                <button class="modalOn btn btn-primary w-20">팀원 및 옵저버 초대</button>
+                                                <span id="memberWarning" style="color: red; font-size: 14px; float: right; margin-top: 10px;"></span>
+                                            </div>
+
+                                            <div>
+                                                <!-- 팀원 목록 -->
+                                                <div style="float: left; width: 49%; padding-top: 10px">
+                                                    <span>팀원 목록</span>
+                                                    <div name=finalMember class="form-control" type="text" style="height: 200px; overflow: auto;" readonly>
+                                                    </div>
+                                                </div>
+                                                <!-- 옵저버 목록 -->
+                                                <div style="float: right; width: 49%; padding-top: 10px">
+                                                    <span>옵저버 목록</span>
+                                                    <div name=finalObserverMember class="form-control" type="text" style="height: 200px; overflow: auto;" readonly>
+                                                    </div>
+                                                </div>
+                                                <div align="center">
+                                                    <button class="btn btn-primary w-20" type="button" style="margin-top: 30px;" onclick="createProject()">프로젝트 생성</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </form>
+            
+            <!-- 모달창 -->
+            <div id="basicModal" class="modal-overlay">
+                <div class="modal-content">
+                    <p class="title" style="padding-top: 20px"></p>
+                    <div class="content">
+                        <div class="sub-form">
+                            <div>
+                                <div style="float: left; width: 49%;">
+                                    <p>전체 목록</p>
+                                    <div class="form-control" type="text" style="height: 400px; overflow: auto;" required>
+                                        <div style="display: flex;">
+                                            <div class="depListWrap" style="padding-right: 20px; border-right: 1px solid #ced4da;"></div>
+                                            <div class="depMemberListWrap"></div>
+                                        </div>
+                                    </div>
+
+                                    <div style="padding-top: 10px">
+                                        <button type="button" class="btn btn-primary w-20" onclick="teamPlus(event)">추가</button>
+                                    </div>
+                                </div>
+
+                                <div style="float: right; width: 49%" required>
+                                    <p style="float: left">추가 목록</p>
+                                    <p style="float: right" class="allMember">일괄 삭제
+                                        <input type=checkbox name="memberDelete" style="padding: 10px" onclick="selectAllMember(this)">
+                                    </p>
+                                    <div id=teamName class="form-control" type="text" style="height: 400px; overflow: auto;" readonly>
+                                    </div>
+                                    <div style="padding-top: 10px">
+                                    </div>
+                                    <button type="button" onclick="memberDelete2()" class="btn btn-primary w-20" style="float: left;">삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div align="center">
+                        <button type="button" onclick="memberSuccess()" class="modalOff btn btn-primary w-20" style="margin-top: 30px">완료</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</th:block>
+<script src="/assets/js/modal.js"></script>
+<script src="/assets/js/project-add.js"></script>
+
+</html>

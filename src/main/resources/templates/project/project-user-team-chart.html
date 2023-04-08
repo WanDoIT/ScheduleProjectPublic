@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{./include/basic-layout :: 함수( ~{:: .wrap } ) }">
+
+<div class="wrap">
+  <main id="main" class="main">
+
+	<div class="pagetitle">
+			<h1 class="card-title">
+					 [[${pjVO.pjName}]]
+				</h1>
+				<h6 style="padding-bottom: 20px">
+					 [[${pjVO.pjDescription}]]
+				</h6>
+				<nav>
+
+					<!-- Bordered Tabs Justified -->
+					<ul class="nav nav-tabs nav-tabs-bordered d-flex"
+						id="borderedTabJustified" role="tablist">
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="home-tab"
+								data-bs-toggle="tab" data-bs-target="#bordered-justified-home"
+								type="button" role="tab" aria-controls="home"
+								aria-selected="true"
+								th:onclick="|location.href='@{/project/project-started(pj_num=${param.pj_num})}'|">홈</button> <!-- 받아온get값 다른페이지로 넘기기 -->
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="profile-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-profile" type="button"
+								role="tab" aria-controls="profile" aria-selected="false"
+								th:onclick="|location.href='@{/userboards/board-list(pj_num=${param.pj_num})}'|">게시판</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-calendar(pj_num=${param.pj_num})}'|">캘린더</button>
+						</li>
+						<li class="nav-item" role="presentation" style="width: 10%">
+							<button class="nav-link w-100 active" id="contact-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#bordered-justified-contact" type="button"
+								role="tab" aria-controls="contact" aria-selected="false"
+								th:onclick="|location.href='@{/project/project-user-team-chart(pj_num=${param.pj_num})}'|">진척률</button>
+						</li>
+					</ul>
+				</nav>
+			</div>
+			<!-- End Page Title -->
+
+
+		    <div class="pagetitle">
+		      <nav>
+		        <ol class="breadcrumb">
+		          <li class="breadcrumb-item active">팀 진척률 보기</li>
+		          <li class="breadcrumb-item" th:onclick="|location.href='@{/project/project-user-my-chart(pj_num=${param.pj_num})}'|" style="cursor:pointer">내 진척률 보기</li>
+		        </ol>
+		      </nav>
+		    </div><!-- End Page Title -->
+
+	         <div class="col-lg-12">
+	          <div class="card">
+	            <div class="card-body">
+	              <h5 class="card-title">항목 별 통계</h5>
+					<div id="chart-null"></div>
+	              <!-- Doughnut Chart -->
+	              <canvas id="doughnutChart" style="max-height: 400px;"></canvas>
+	              <script>
+	                document.addEventListener("DOMContentLoaded", () => {
+	                	//ajax로 통계 수치 요청
+	                  $.ajax({
+	                	  url:'../get-team-category-chart?pj_num=[[${pjVO.pjNum}]]',
+	                	  type:'get',
+	                	  success:function(result){
+	                		  var data = JSON.parse(result);//JSON 변환
+								//가져온 json 데이터로 대입해줌
+
+			                  new Chart(document.querySelector('#doughnutChart'), {
+			                    type: 'doughnut',
+			                    data: {
+			                      labels: data.category, //카테고리 데이터
+			                      datasets: [{
+			                        label: '진행률',
+			                        data: data.progress, //진행률 데이터
+			                        backgroundColor: [
+			                          'rgb(255, 99, 132)',
+			                          'rgb(75, 192, 192)',
+			                          'rgb(54, 162, 235)',
+			                          'rgb(255, 205, 86)'
+			                        ],
+			                        hoverOffset: 4
+			                      }]
+			                    }
+			                  });
+
+
+	                	  },
+	                	  error:function() {
+
+	                	  }
+	                  });
+			        });
+	              </script>
+	              <!-- End Doughnut CHart -->
+
+	            </div>
+	          </div>
+	        </div>
+
+	        <div class="col-lg-12">
+	          <div class="card">
+	            <div class="card-body">
+	              <h5 class="card-title">팀원 별 진척률</h5>
+
+	              <!-- Polar Area Chart -->
+	              <canvas id="barChart" style="max-height: 400px;"></canvas>
+	              <script>
+	                document.addEventListener("DOMContentLoaded", () => {
+	                	$.ajax({
+	                		url:'../get-team-member-chart?pj_num=[[${pjVO.pjNum}]]',
+	                		type:'get',
+	                		success:function(result){ // 해당 팀 인원과 진행률 데이터 가져옴
+	                		  var data = JSON.parse(result); // 데이터 json으로 변환
+	                		  new Chart(document.querySelector('#barChart'), {
+	      	                    type: 'bar',
+	      	                    data: {
+	      	                      labels: data.userName, //팀원 표현
+	      	                      datasets: [{
+	      	                        label: '진행률',
+	      	                        data: data.progress, //진척률표현
+	      	                        backgroundColor: [
+	      	                          'rgba(255, 99, 132, 0.2)',
+	      	                          'rgba(255, 159, 64, 0.2)',
+	      	                          'rgba(255, 205, 86, 0.2)',
+	      	                          'rgba(75, 192, 192, 0.2)',
+	      	                          'rgba(54, 162, 235, 0.2)',
+	      	                          'rgba(153, 102, 255, 0.2)',
+	      	                          'rgba(201, 203, 207, 0.2)'
+	      	                        ],
+	      	                        borderColor: [
+	      	                          'rgb(255, 99, 132)',
+	      	                          'rgb(255, 159, 64)',
+	      	                          'rgb(255, 205, 86)',
+	      	                          'rgb(75, 192, 192)',
+	      	                          'rgb(54, 162, 235)',
+	      	                          'rgb(153, 102, 255)',
+	      	                          'rgb(201, 203, 207)'
+	      	                        ],
+	      	                        borderWidth: 1
+	      	                      }]
+	      	                    },
+	      	                    options: {
+	      	                      scales: {
+	      	                        y: {
+	      	                          beginAtZero: true,
+	      	                          max:100
+	      	                        }
+	      	                      }
+	      	                    }
+	      	                  });
+	                		},
+	                		error:function(){
+
+	                		}
+	                	})
+	                });
+	              </script>
+	              <!-- End Polar Area Chart -->
+
+	            </div>
+	          </div>
+	        </div>
+
+
+  </main><!-- End #main -->
+</div>
+</th:block>
+
+</html>
